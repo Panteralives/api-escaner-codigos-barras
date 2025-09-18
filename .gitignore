@@ -1,23 +1,39 @@
-# Dependencies
-node_modules/
-vendor/
-
-# Build outputs
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
 dist/
 build/
-*.exe
-*.dll
-*.so
-*.dylib
+*.egg-info/
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual Environment
+venv/
+env/
+ENV/
 
 # Environment files
 .env
 .env.local
 .env.production
 
+# Database
+*.db
+*.sqlite3
+barcode_scanner.db
+
 # Logs
 *.log
 logs/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
 
 # OS generated files
 .DS_Store
@@ -38,3 +54,6 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
+
+# Streamlit
+.streamlit/secrets.toml
