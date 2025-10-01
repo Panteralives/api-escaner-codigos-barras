@@ -153,7 +153,19 @@ async def pos_dashboard(request: Request):
 
 @app.get("/pos", response_class=HTMLResponse)
 async def pos_interface(request: Request):
-    """Interfaz principal tipo punto de venta"""
+    """Interfaz principal tipo punto de venta - Versión 2"""
+    api_status = await check_api_connection()
+    scanner_status = await check_usb_scanner_status()
+    
+    return templates.TemplateResponse("pos_interface_v2.html", {
+        "request": request,
+        "api_status": api_status,
+        "scanner_status": scanner_status
+    })
+
+@app.get("/pos/v1", response_class=HTMLResponse)
+async def pos_interface_v1(request: Request):
+    """Interfaz POS versión 1 (legacy)"""
     api_status = await check_api_connection()
     scanner_status = await check_usb_scanner_status()
     

@@ -1,44 +1,665 @@
-import type { Product } from '@/types';
-import { Button } from '@/components/ui/button';
-import { Trash2 } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS - Punto de Venta v2</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --pos-primary: #2c5282;
+            --pos-secondary: #4a90e2;
+            --pos-accent: #28a745;
+            --pos-danger: #dc3545;
+            --pos-warning: #ffc107;
+            --pos-success: #28a745;
+            --pos-dark: #343a40;
+            --pos-light: #f8f9fa;
+            --pos-bg: #e8f4fd;
+            --pos-border-radius: 12px;
+            --pos-card-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
 
-type ActionButtonsProps = {
-  onClearAll: () => void;
-  onCancelLast: () => void;
-  lastProduct: Product | undefined;
-};
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-export function ActionButtons({ onClearAll, onCancelLast, lastProduct }: ActionButtonsProps) {
-  return (
-    <div className="flex-1 flex flex-col gap-4">
-      <Button size="lg" className="w-full h-16 text-xl bg-accent hover:bg-accent/90">
-        PAGAR
-      </Button>
-      <Button 
-        size="lg" 
-        variant="secondary"
-        className="w-full h-auto py-3" 
-        disabled={!lastProduct} 
-        onClick={onCancelLast}
-      >
-        <div className="flex flex-col items-center">
-          <span className="text-base font-semibold">Cancelar Último Producto</span>
-          {lastProduct ? (
-            <span className="text-xs text-muted-foreground font-mono">{lastProduct.id}</span>
-          ) : (
-             <span className="text-xs text-muted-foreground font-mono">-</span>
-          )}
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--pos-bg);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Layout principal */
+        .pos-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: var(--pos-bg);
+        }
+
+        /* Header fusionado */
+        .pos-header {
+            background: linear-gradient(135deg, var(--pos-primary) 0%, var(--pos-secondary) 100%);
+            color: white;
+            padding: 1rem 1.5rem;
+            box-shadow: var(--pos-card-shadow);
+            z-index: 100;
+        }
+
+        .pos-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .scanner-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #28a745;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* Contenido principal */
+        .pos-main {
+            flex: 1;
+            display: flex;
+            padding: 1rem;
+            gap: 1rem;
+            overflow: hidden;
+        }
+
+        /* Lista de productos - MÁS ESPACIO */
+        .products-section {
+            flex: 2;
+            background: white;
+            border-radius: var(--pos-border-radius);
+            box-shadow: var(--pos-card-shadow);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .products-header {
+            background: linear-gradient(135deg, var(--pos-primary) 0%, var(--pos-secondary) 100%);
+            color: white;
+            padding: 1rem;
+            border-radius: var(--pos-border-radius) var(--pos-border-radius) 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .products-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        .product-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+            transition: background-color 0.2s;
+        }
+
+        .product-item:hover {
+            background: var(--pos-light);
+        }
+
+        .product-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--pos-primary);
+            color: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-right: 1rem;
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin: 0 0 0.25rem 0;
+        }
+
+        .product-code {
+            color: var(--pos-secondary);
+            font-size: 0.9rem;
+            font-family: 'Courier New', monospace;
+        }
+
+        .product-price {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--pos-success);
+            text-align: right;
+            min-width: 100px;
+        }
+
+        /* Panel de acciones */
+        .actions-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        /* Input section */
+        .input-card {
+            background: white;
+            border-radius: var(--pos-border-radius);
+            box-shadow: var(--pos-card-shadow);
+            padding: 1.5rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            color: var(--pos-dark);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .product-input {
+            font-size: 1.1rem;
+            height: 3rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 0 1rem;
+            width: 100%;
+            transition: all 0.2s;
+        }
+
+        .product-input:focus {
+            border-color: var(--pos-primary);
+            box-shadow: 0 0 0 0.2rem rgba(44, 82, 130, 0.25);
+            outline: none;
+        }
+
+        /* Total section */
+        .total-card {
+            background: linear-gradient(135deg, var(--pos-success) 0%, #20c997 100%);
+            color: white;
+            border-radius: var(--pos-border-radius);
+            box-shadow: var(--pos-card-shadow);
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .total-label {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            opacity: 0.9;
+        }
+
+        .total-amount {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .total-items {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 0.5rem;
+        }
+
+        /* Action Buttons - DISEÑO V2 */
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: auto;
+        }
+
+        .btn-pos {
+            border: none;
+            border-radius: var(--pos-border-radius);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .btn-pos:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn-pos:active {
+            transform: translateY(0);
+        }
+
+        .btn-pos:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Botón PAGAR - Principal */
+        .btn-pay {
+            height: 4rem;
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, var(--pos-accent) 0%, #20c997 100%);
+            color: white;
+        }
+
+        .btn-pay:hover {
+            background: linear-gradient(135deg, #218838 0%, #17a2b8 100%);
+        }
+
+        /* Botón Cancelar Último - Secundario */
+        .btn-cancel-last {
+            height: auto;
+            padding: 1rem;
+            background: #6c757d;
+            color: white;
+            flex-direction: column;
+        }
+
+        .btn-cancel-last:hover {
+            background: #5a6268;
+        }
+
+        .cancel-main-text {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .cancel-sub-text {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            font-family: 'Courier New', monospace;
+            margin-top: 0.25rem;
+        }
+
+        /* Botón Limpiar Todo - Destructivo */
+        .btn-clear {
+            height: 4rem;
+            font-size: 1.25rem;
+            background: linear-gradient(135deg, var(--pos-danger) 0%, #e74c3c 100%);
+            color: white;
+            margin-top: auto;
+        }
+
+        .btn-clear:hover {
+            background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+        }
+
+        /* Estado vacío */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--pos-secondary);
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        /* Animaciones */
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .pos-main {
+                flex-direction: column;
+            }
+            
+            .products-section {
+                flex: 1;
+                min-height: 300px;
+            }
+            
+            .actions-section {
+                flex: none;
+            }
+            
+            .total-amount {
+                font-size: 2rem;
+            }
+        }
+
+        /* Alertas/Notificaciones */
+        .alert-pos {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            z-index: 1060;
+            max-width: 350px;
+            border-radius: var(--pos-border-radius);
+            box-shadow: var(--pos-card-shadow);
+        }
+    </style>
+</head>
+<body>
+    <div class="pos-container">
+        <!-- Header fusionado optimizado -->
+        <div class="pos-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="fas fa-cash-register fs-3"></i>
+                    <h1>Punto de Venta - Sistema de Escáner</h1>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="scanner-status">
+                        <i class="fas fa-qrcode"></i>
+                        <div class="status-dot"></div>
+                        <span>Escaneando</span>
+                    </div>
+                    <button class="btn btn-outline-light btn-sm" onclick="showConfig()">
+                        <i class="fas fa-cog me-1"></i>Config
+                    </button>
+                </div>
+            </div>
         </div>
-      </Button>
-      <Button 
-        size="lg" 
-        variant="destructive" 
-        className="w-full h-16 text-xl mt-auto" 
-        onClick={onClearAll}
-      >
-        <Trash2 className="mr-3 h-6 w-6" />
-        LIMPIAR TODO
-      </Button>
+
+        <!-- Contenido principal -->
+        <div class="pos-main">
+            <!-- Lista de productos escaneados - ESPACIO OPTIMIZADO -->
+            <div class="products-section">
+                <div class="products-header">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="fw-bold">Productos Escaneados</span>
+                    </div>
+                    <span id="items-count" class="badge bg-light text-dark">0 items</span>
+                </div>
+                
+                <div class="products-list" id="products-list">
+                    <!-- Estado vacío -->
+                    <div id="empty-state" class="empty-state">
+                        <i class="fas fa-shopping-cart empty-icon"></i>
+                        <h4>Carrito Vacío</h4>
+                        <p>Escanea productos para agregarlos a la venta</p>
+                        <small class="text-muted">Usa el campo de código o scanner USB</small>
+                    </div>
+                    
+                    <!-- Los productos aparecerán aquí dinámicamente -->
+                </div>
+            </div>
+
+            <!-- Panel de acciones -->
+            <div class="actions-section">
+                <!-- Input de código -->
+                <div class="input-card">
+                    <div class="input-group">
+                        <label for="product-code">
+                            <i class="fas fa-barcode me-2"></i>Código del Producto
+                        </label>
+                        <input 
+                            type="text" 
+                            id="product-code" 
+                            class="product-input" 
+                            placeholder="Escanea o escribe el código..."
+                            autocomplete="off"
+                        >
+                    </div>
+                </div>
+
+                <!-- Total -->
+                <div class="total-card">
+                    <div class="total-label">TOTAL A PAGAR</div>
+                    <div class="total-amount" id="total-amount">$0.00</div>
+                    <div class="total-items" id="total-items">0 productos</div>
+                </div>
+
+                <!-- Action Buttons V2 -->
+                <div class="action-buttons">
+                    <!-- Botón PAGAR -->
+                    <button id="btn-pay" class="btn-pos btn-pay" onclick="processPay()" disabled>
+                        <i class="fas fa-credit-card"></i>
+                        PAGAR
+                    </button>
+
+                    <!-- Botón Cancelar Último Producto -->
+                    <button id="btn-cancel-last" class="btn-pos btn-cancel-last" onclick="cancelLastProduct()" disabled>
+                        <div class="cancel-main-text">Cancelar Último Producto</div>
+                        <div class="cancel-sub-text" id="last-product-code">-</div>
+                    </button>
+
+                    <!-- Botón Limpiar Todo -->
+                    <button id="btn-clear" class="btn-pos btn-clear" onclick="clearAll()">
+                        <i class="fas fa-trash"></i>
+                        LIMPIAR TODO
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
-  );
-}
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- POS JavaScript -->
+    <script>
+        // Variables globales
+        let cart = [];
+        let lastProduct = undefined;
+        
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePOS();
+            setupEventListeners();
+        });
+        
+        function initializePOS() {
+            console.log('🚀 Inicializando POS v2...');
+            updateDisplay();
+        }
+        
+        function setupEventListeners() {
+            const productInput = document.getElementById('product-code');
+            productInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addProductFromInput();
+                }
+            });
+            
+            // Focus automático
+            productInput.focus();
+        }
+        
+        function addProductFromInput() {
+            const input = document.getElementById('product-code');
+            const codigo = input.value.trim();
+            
+            if (!codigo) {
+                showAlert('warning', 'Ingresa un código de producto');
+                return;
+            }
+            
+            // Simular producto (en producción conectaría con API)
+            const producto = {
+                id: codigo,
+                name: `Producto ${codigo}`,
+                price: (Math.random() * 100 + 10).toFixed(2)
+            };
+            
+            addProductToCart(producto);
+            input.value = '';
+            input.focus();
+        }
+        
+        function addProductToCart(producto) {
+            cart.push(producto);
+            lastProduct = producto;
+            updateDisplay();
+            showAlert('success', `${producto.name} agregado`);
+        }
+        
+        function updateDisplay() {
+            updateProductsList();
+            updateTotals();
+            updateButtons();
+        }
+        
+        function updateProductsList() {
+            const container = document.getElementById('products-list');
+            const emptyState = document.getElementById('empty-state');
+            const itemsCount = document.getElementById('items-count');
+            
+            if (cart.length === 0) {
+                emptyState.style.display = 'flex';
+                itemsCount.textContent = '0 items';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            itemsCount.textContent = `${cart.length} item${cart.length !== 1 ? 's' : ''}`;
+            
+            const html = cart.map((producto, index) => `
+                <div class="product-item slide-in" data-index="${index}">
+                    <div class="product-icon">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-name">${producto.name}</div>
+                        <div class="product-code">${producto.id}</div>
+                    </div>
+                    <div class="product-price">$${producto.price}</div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = html;
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function updateTotals() {
+            const total = cart.reduce((sum, producto) => sum + parseFloat(producto.price), 0);
+            document.getElementById('total-amount').textContent = `$${total.toFixed(2)}`;
+            document.getElementById('total-items').textContent = `${cart.length} producto${cart.length !== 1 ? 's' : ''}`;
+        }
+        
+        function updateButtons() {
+            const payBtn = document.getElementById('btn-pay');
+            const cancelBtn = document.getElementById('btn-cancel-last');
+            const lastProductCode = document.getElementById('last-product-code');
+            
+            payBtn.disabled = cart.length === 0;
+            cancelBtn.disabled = cart.length === 0;
+            
+            if (lastProduct) {
+                lastProductCode.textContent = lastProduct.id;
+            } else {
+                lastProductCode.textContent = '-';
+            }
+        }
+        
+        // Funciones de botones
+        function processPay() {
+            if (cart.length === 0) return;
+            
+            const total = cart.reduce((sum, producto) => sum + parseFloat(producto.price), 0);
+            showAlert('success', `💳 Pago procesado: $${total.toFixed(2)}`);
+            
+            setTimeout(() => {
+                clearAll(false);
+            }, 2000);
+        }
+        
+        function cancelLastProduct() {
+            if (cart.length === 0) return;
+            
+            const removedProduct = cart.pop();
+            lastProduct = cart.length > 0 ? cart[cart.length - 1] : undefined;
+            updateDisplay();
+            showAlert('info', `${removedProduct.name} cancelado`);
+        }
+        
+        function clearAll(confirm = true) {
+            if (confirm && cart.length > 0) {
+                if (!window.confirm('¿Limpiar toda la venta?')) {
+                    return;
+                }
+            }
+            
+            cart = [];
+            lastProduct = undefined;
+            updateDisplay();
+            
+            if (confirm) {
+                showAlert('info', 'Venta limpiada');
+            }
+        }
+        
+        function showConfig() {
+            alert('Configuración del sistema');
+        }
+        
+        // Sistema de alertas
+        function showAlert(type, message) {
+            const alertEl = document.createElement('div');
+            alertEl.className = `alert alert-${type} alert-dismissible fade show alert-pos`;
+            alertEl.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertEl);
+            
+            setTimeout(() => {
+                if (alertEl.parentNode) {
+                    alertEl.remove();
+                }
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
