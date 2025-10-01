@@ -1,10 +1,14 @@
 import cv2
 import numpy as np
-from pyzbar import pyzbar
 from PIL import Image
 from typing import List, Optional, Tuple
 import logging
 import io
+
+# Deshabilitar pyzbar temporalmente por problemas en Windows
+PYZBAR_AVAILABLE = False
+print("⚠️ pyzbar deshabilitado - usando solo scanner USB-HID")
+print("💡 Para habilitar cámara, soluciona las dependencias de pyzbar en Windows")
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -62,6 +66,10 @@ class BarcodeScanner:
         Returns:
             Tupla (código, tipo) si se encuentra código, None en caso contrario
         """
+        if not PYZBAR_AVAILABLE:
+            logger.error("pyzbar no disponible - usa el scanner USB-HID en su lugar")
+            return None
+            
         if self.cap is None or not self.cap.isOpened():
             logger.error("Cámara no inicializada")
             return None
@@ -75,8 +83,14 @@ class BarcodeScanner:
             # Convertir frame a formato para pyzbar
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             
-            # Escanear códigos de barras
-            barcodes = pyzbar.decode(gray)
+            # Importar pyzbar solo cuando sea necesario
+            try:
+                from pyzbar import pyzbar
+                # Escanear códigos de barras
+                barcodes = pyzbar.decode(gray)
+            except Exception as e:
+                logger.error(f"Error importando pyzbar: {e}")
+                return None
             
             if barcodes:
                 for barcode in barcodes:
@@ -103,6 +117,10 @@ class BarcodeScanner:
         Returns:
             Tupla (código, tipo) si se encuentra código, None en caso contrario
         """
+        if not PYZBAR_AVAILABLE:
+            logger.error("pyzbar no disponible - usa el scanner USB-HID en su lugar")
+            return None
+            
         try:
             # Convertir bytes a imagen PIL
             image = Image.open(io.BytesIO(image_bytes))
@@ -116,8 +134,14 @@ class BarcodeScanner:
             else:
                 gray = image_np
             
-            # Escanear códigos de barras
-            barcodes = pyzbar.decode(gray)
+            # Importar pyzbar solo cuando sea necesario
+            try:
+                from pyzbar import pyzbar
+                # Escanear códigos de barras
+                barcodes = pyzbar.decode(gray)
+            except Exception as e:
+                logger.error(f"Error importando pyzbar: {e}")
+                return None
             
             if barcodes:
                 for barcode in barcodes:
@@ -143,6 +167,10 @@ class BarcodeScanner:
         Returns:
             Tupla (código, tipo) si se encuentra código, None en caso contrario
         """
+        if not PYZBAR_AVAILABLE:
+            logger.error("pyzbar no disponible - usa el scanner USB-HID en su lugar")
+            return None
+            
         try:
             # Leer imagen
             image = cv2.imread(image_path)
@@ -153,8 +181,14 @@ class BarcodeScanner:
             # Convertir a escala de grises
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             
-            # Escanear códigos de barras
-            barcodes = pyzbar.decode(gray)
+            # Importar pyzbar solo cuando sea necesario
+            try:
+                from pyzbar import pyzbar
+                # Escanear códigos de barras
+                barcodes = pyzbar.decode(gray)
+            except Exception as e:
+                logger.error(f"Error importando pyzbar: {e}")
+                return None
             
             if barcodes:
                 for barcode in barcodes:

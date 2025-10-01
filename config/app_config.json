@@ -1,0 +1,21 @@
+{
+  "database": {
+    "path": "./inventario.db",
+    "backup_on_startup": true
+  },
+  "api": {
+    "host": "localhost",
+    "port": 8001,
+    "debug": true
+  },
+  "security": {
+    "jwt_secret": "tu-clave-secreta-super-segura-aqui-2024",
+    "jwt_expiry_hours": 24,
+    "password_min_length": 6
+  },
+  "business": {
+    "default_tax_rate": 0.16,
+    "currency": "MXN",
+    "low_stock_threshold": 10
+  }
+}

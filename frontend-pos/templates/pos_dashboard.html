@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard POS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-6 fw-bold">
+                <i class="fas fa-tachometer-alt me-3 text-primary"></i>
+                Dashboard POS
+            </h1>
+            <p class="lead text-muted">Sistema de punto de venta con escáner de códigos de barras</p>
+        </div>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="pos-stats-card">
+                <i class="fas fa-boxes pos-stats-icon text-primary"></i>
+                <h3 class="fw-bold text-primary" id="total-products">{{ total_productos }}</h3>
+                <p class="text-muted mb-0">Productos Registrados</p>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="pos-stats-card">
+                <i class="fas fa-wifi pos-stats-icon {% if api_status %}text-success{% else %}text-danger{% endif %}"></i>
+                <h3 class="fw-bold {% if api_status %}text-success{% else %}text-danger{% endif %}">
+                    {% if api_status %}Conectado{% else %}Desconectado{% endif %}
+                </h3>
+                <p class="text-muted mb-0">Estado API</p>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="pos-stats-card" id="scanner-status-card">
+                <i class="fas fa-qrcode pos-stats-icon text-info"></i>
+                <h3 class="fw-bold text-info" id="scanner-status-text">Verificando...</h3>
+                <p class="text-muted mb-0">Scanner USB</p>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="pos-stats-card">
+                <i class="fas fa-clock pos-stats-icon text-warning"></i>
+                <h3 class="fw-bold text-warning" id="session-time">00:00:00</h3>
+                <p class="text-muted mb-0">Tiempo de Sesión</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col">
+            <h3 class="fw-bold mb-3">
+                <i class="fas fa-bolt me-2 text-primary"></i>Acciones Rápidas
+            </h3>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="pos-card card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-qrcode fa-4x text-primary mb-3"></i>
+                    <h5 class="card-title fw-bold">Escanear Códigos</h5>
+                    <p class="card-text text-muted">
+                        Interfaz principal para escanear códigos de barras en tiempo real
+                    </p>
+                    <a href="/pos" class="btn btn-primary btn-lg pos-btn">
+                        <i class="fas fa-play me-2"></i>Iniciar Escaneo
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="pos-card card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-plus-circle fa-4x text-success mb-3"></i>
+                    <h5 class="card-title fw-bold">Gestionar Productos</h5>
+                    <p class="card-text text-muted">
+                        Agregar, editar y organizar productos en el inventario
+                    </p>
+                    <a href="/productos" class="btn btn-success btn-lg pos-btn">
+                        <i class="fas fa-boxes me-2"></i>Ver Productos
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="pos-card card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-cog fa-4x text-info mb-3"></i>
+                    <h5 class="card-title fw-bold">Configuración</h5>
+                    <p class="card-text text-muted">
+                        Configurar scanner, verificar estado del sistema
+                    </p>
+                    <button class="btn btn-info btn-lg pos-btn" onclick="checkSystemStatus()">
+                        <i class="fas fa-tools me-2"></i>Sistema
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Products -->
+    <div class="row">
+        <div class="col">
+            <h3 class="fw-bold mb-3">
+                <i class="fas fa-history me-2 text-primary"></i>Productos Recientes
+            </h3>
+            
+            <div class="pos-card card">
+                <div class="card-body">
+                    {% if productos %}
+                    <div class="row">
+                        {% for producto in productos %}
+                        <div class="col-lg-6 col-xl-4 mb-3">
+                            <div class="pos-product-card">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div class="flex-grow-1">
+                                        <h6 class="fw-bold mb-1">{{ producto.nombre }}</h6>
+                                        <small class="text-muted">{{ producto.categoria or 'Sin categoría' }}</small>
+                                    </div>
+                                    <span class="badge {% if producto.stock > 10 %}bg-success{% elif producto.stock > 0 %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                        {{ producto.stock }}
+                                    </span>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <code class="small bg-light px-2 py-1 rounded">{{ producto.codigo_barra }}</code>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="fw-bold text-success">${{ "%.2f"|format(producto.precio) }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="text-center mt-3">
+                        <a href="/productos" class="btn btn-outline-primary pos-btn">
+                            <i class="fas fa-arrow-right me-2"></i>Ver Todos los Productos
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-box-open fa-4x text-muted mb-3"></i>
+                        <h5 class="text-muted">No hay productos registrados</h5>
+                        <p class="text-muted">Agrega productos para comenzar a usar el sistema</p>
+                        <a href="/productos" class="btn btn-primary pos-btn">
+                            <i class="fas fa-plus me-2"></i>Agregar Productos
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let sessionStartTime = Date.now();
+    let scannerStatusCheckInterval = null;
+    
+    // Inicializar dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeDashboard();
+        startSessionTimer();
+        checkScannerStatus();
+        
+        // Verificar scanner cada 30 segundos
+        scannerStatusCheckInterval = setInterval(checkScannerStatus, 30000);
+    });
+    
+    // Inicializar dashboard
+    function initializeDashboard() {
+        console.log('🚀 Inicializando Dashboard POS...');
+        
+        // Actualizar contadores si es necesario
+        updateProductCount();
+    }
+    
+    // Iniciar temporizador de sesión
+    function startSessionTimer() {
+        setInterval(() => {
+            const elapsed = Date.now() - sessionStartTime;
+            const hours = Math.floor(elapsed / (1000 * 60 * 60));
+            const minutes = Math.floor((elapsed % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((elapsed % (1000 * 60)) / 1000);
+            
+            document.getElementById('session-time').textContent = 
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }, 1000);
+    }
+    
+    // Verificar estado del scanner
+    async function checkScannerStatus() {
+        try {
+            const response = await fetch('/api/scanner/status');
+            const data = await response.json();
+            
+            const statusCard = document.getElementById('scanner-status-card');
+            const statusText = document.getElementById('scanner-status-text');
+            const icon = statusCard.querySelector('i');
+            
+            const isAvailable = data.scanner_info?.keyboard_library;
+            const isListening = data.scanner_info?.listening;
+            
+            if (isListening) {
+                statusText.textContent = 'Activo';
+                statusText.className = 'fw-bold text-success';
+                icon.className = 'fas fa-qrcode pos-stats-icon text-success';
+            } else if (isAvailable) {
+                statusText.textContent = 'Disponible';
+                statusText.className = 'fw-bold text-warning';
+                icon.className = 'fas fa-qrcode pos-stats-icon text-warning';
+            } else {
+                statusText.textContent = 'No Disponible';
+                statusText.className = 'fw-bold text-danger';
+                icon.className = 'fas fa-exclamation-triangle pos-stats-icon text-danger';
+            }
+            
+        } catch (error) {
+            console.error('Error verificando scanner:', error);
+            
+            const statusText = document.getElementById('scanner-status-text');
+            const icon = document.getElementById('scanner-status-card').querySelector('i');
+            
+            statusText.textContent = 'Error';
+            statusText.className = 'fw-bold text-danger';
+            icon.className = 'fas fa-exclamation-triangle pos-stats-icon text-danger';
+        }
+    }
+    
+    // Actualizar contador de productos
+    async function updateProductCount() {
+        try {
+            const response = await fetch('/api/productos');
+            const productos = await response.json();
+            
+            document.getElementById('total-products').textContent = productos.length;
+            
+        } catch (error) {
+            console.error('Error obteniendo productos:', error);
+        }
+    }
+    
+    // Manejar actualizaciones WebSocket
+    window.handleStatusUpdate = function(data) {
+        if (data.productos_count !== undefined) {
+            document.getElementById('total-products').textContent = data.productos_count;
+        }
+        
+        if (data.scanner_status) {
+            // Actualizar estado del scanner basado en los datos WebSocket
+            const statusText = document.getElementById('scanner-status-text');
+            const icon = document.getElementById('scanner-status-card').querySelector('i');
+            
+            const isAvailable = data.scanner_status.scanner_info?.keyboard_library;
+            const isListening = data.scanner_status.scanner_info?.listening;
+            
+            if (isListening) {
+                statusText.textContent = 'Activo';
+                statusText.className = 'fw-bold text-success';
+                icon.className = 'fas fa-qrcode pos-stats-icon text-success';
+            } else if (isAvailable) {
+                statusText.textContent = 'Disponible';
+                statusText.className = 'fw-bold text-warning';
+                icon.className = 'fas fa-qrcode pos-stats-icon text-warning';
+            } else {
+                statusText.textContent = 'No Disponible';
+                statusText.className = 'fw-bold text-danger';
+                icon.className = 'fas fa-exclamation-triangle pos-stats-icon text-danger';
+            }
+        }
+    };
+    
+    // Limpiar intervalos al salir
+    window.addEventListener('beforeunload', function() {
+        if (scannerStatusCheckInterval) {
+            clearInterval(scannerStatusCheckInterval);
+        }
+    });
+    
+    // Agregar efectos hover a las cards
+    document.querySelectorAll('.pos-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+</script>
+{% endblock %}

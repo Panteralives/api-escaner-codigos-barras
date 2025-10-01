@@ -1,0 +1,802 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Ejecutivo - POS Avanzado{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+<style>
+    :root {
+        --dashboard-primary: #2563eb;
+        --dashboard-success: #10b981;
+        --dashboard-warning: #f59e0b;
+        --dashboard-danger: #ef4444;
+        --dashboard-info: #3b82f6;
+        --dashboard-card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    .dashboard-container {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        min-height: 100vh;
+        padding: 1rem;
+    }
+    
+    .dashboard-header {
+        background: linear-gradient(135deg, var(--dashboard-primary) 0%, #1d4ed8 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        box-shadow: var(--dashboard-card-shadow);
+    }
+    
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .kpi-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--dashboard-card-shadow);
+        border-left: 4px solid var(--dashboard-primary);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .kpi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .kpi-card.success { border-left-color: var(--dashboard-success); }
+    .kpi-card.warning { border-left-color: var(--dashboard-warning); }
+    .kpi-card.danger { border-left-color: var(--dashboard-danger); }
+    .kpi-card.info { border-left-color: var(--dashboard-info); }
+    
+    .kpi-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .kpi-icon.success { background: rgba(16, 185, 129, 0.1); color: var(--dashboard-success); }
+    .kpi-icon.warning { background: rgba(245, 158, 11, 0.1); color: var(--dashboard-warning); }
+    .kpi-icon.danger { background: rgba(239, 68, 68, 0.1); color: var(--dashboard-danger); }
+    .kpi-icon.info { background: rgba(59, 130, 246, 0.1); color: var(--dashboard-info); }
+    
+    .kpi-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: #1f2937;
+    }
+    
+    .kpi-label {
+        color: #6b7280;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+    
+    .kpi-change {
+        font-size: 0.875rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .kpi-change.positive { color: var(--dashboard-success); }
+    .kpi-change.negative { color: var(--dashboard-danger); }
+    
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .chart-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--dashboard-card-shadow);
+    }
+    
+    .chart-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .chart-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #1f2937;
+    }
+    
+    .chart-subtitle {
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+    
+    .status-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+    }
+    
+    .status-online { background-color: var(--dashboard-success); }
+    .status-warning { background-color: var(--dashboard-warning); }
+    .status-offline { background-color: var(--dashboard-danger); }
+    
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .quick-action-btn {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        color: #374151;
+    }
+    
+    .quick-action-btn:hover {
+        border-color: var(--dashboard-primary);
+        background: rgba(37, 99, 235, 0.05);
+        transform: translateY(-1px);
+    }
+    
+    .alerts-panel {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--dashboard-card-shadow);
+    }
+    
+    .alert-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        border-left: 4px solid;
+    }
+    
+    .alert-item.warning {
+        background: rgba(245, 158, 11, 0.1);
+        border-left-color: var(--dashboard-warning);
+    }
+    
+    .alert-item.danger {
+        background: rgba(239, 68, 68, 0.1);
+        border-left-color: var(--dashboard-danger);
+    }
+    
+    .alert-item.info {
+        background: rgba(59, 130, 246, 0.1);
+        border-left-color: var(--dashboard-info);
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .animate-fadeInUp {
+        animation: fadeInUp 0.6s ease-out;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .kpi-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .dashboard-container {
+            padding: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="mb-1">
+                    <i class="fas fa-chart-line me-3"></i>
+                    Dashboard Ejecutivo
+                </h1>
+                <p class="mb-0 opacity-75">Sistema POS Avanzado - Métricas en Tiempo Real</p>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="status-indicator">
+                    <div class="status-dot status-online" id="connection-status"></div>
+                    <span id="connection-text">Conectado</span>
+                </div>
+                <div class="text-end">
+                    <div class="fw-bold" id="current-time">--:--:--</div>
+                    <div class="small opacity-75" id="current-date">-- -- ----</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPIs Grid -->
+    <div class="kpi-grid">
+        <div class="kpi-card success animate-fadeInUp">
+            <div class="kpi-icon success">
+                <i class="fas fa-dollar-sign"></i>
+            </div>
+            <div class="kpi-value" id="today-revenue">$0.00</div>
+            <div class="kpi-label">Ventas Hoy</div>
+            <div class="kpi-change positive" id="revenue-change">
+                <i class="fas fa-arrow-up"></i>
+                <span>+0.0%</span>
+            </div>
+        </div>
+
+        <div class="kpi-card info animate-fadeInUp">
+            <div class="kpi-icon info">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <div class="kpi-value" id="today-sales">0</div>
+            <div class="kpi-label">Transacciones</div>
+            <div class="kpi-change positive" id="sales-change">
+                <i class="fas fa-arrow-up"></i>
+                <span>+0</span>
+            </div>
+        </div>
+
+        <div class="kpi-card warning animate-fadeInUp">
+            <div class="kpi-icon warning">
+                <i class="fas fa-receipt"></i>
+            </div>
+            <div class="kpi-value" id="avg-ticket">$0.00</div>
+            <div class="kpi-label">Ticket Promedio</div>
+            <div class="kpi-change" id="ticket-change">
+                <i class="fas fa-minus"></i>
+                <span>--</span>
+            </div>
+        </div>
+
+        <div class="kpi-card danger animate-fadeInUp">
+            <div class="kpi-icon danger">
+                <i class="fas fa-box"></i>
+            </div>
+            <div class="kpi-value" id="low-stock">0</div>
+            <div class="kpi-label">Stock Bajo</div>
+            <div class="kpi-change" id="stock-change">
+                <span>Productos</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="charts-grid">
+        <!-- Sales Chart -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <div class="chart-title">Ventas por Hora</div>
+                    <div class="chart-subtitle">Últimas 24 horas</div>
+                </div>
+            </div>
+            <canvas id="salesChart" height="300"></canvas>
+        </div>
+
+        <!-- Payment Methods Chart -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <div class="chart-title">Métodos de Pago</div>
+                    <div class="chart-subtitle">Distribución hoy</div>
+                </div>
+            </div>
+            <canvas id="paymentChart" height="300"></canvas>
+        </div>
+
+        <!-- Top Products Chart -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <div class="chart-title">Productos Más Vendidos</div>
+                    <div class="chart-subtitle">Top 10 del día</div>
+                </div>
+            </div>
+            <canvas id="productsChart" height="300"></canvas>
+        </div>
+
+        <!-- Sales Trend Chart -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <div class="chart-title">Tendencia Ventas</div>
+                    <div class="chart-subtitle">Últimos 7 días</div>
+                </div>
+            </div>
+            <canvas id="trendChart" height="300"></canvas>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <a href="/pos" class="quick-action-btn">
+            <i class="fas fa-cash-register fa-2x mb-2 text-primary"></i>
+            <div class="fw-semibold">Nueva Venta</div>
+        </a>
+        <button class="quick-action-btn" onclick="exportReport()">
+            <i class="fas fa-download fa-2x mb-2 text-success"></i>
+            <div class="fw-semibold">Exportar Reporte</div>
+        </button>
+        <button class="quick-action-btn" onclick="printDailySummary()">
+            <i class="fas fa-print fa-2x mb-2 text-info"></i>
+            <div class="fw-semibold">Resumen Diario</div>
+        </button>
+        <a href="/src/frontend/backup.html" class="quick-action-btn">
+            <i class="fas fa-shield-alt fa-2x mb-2 text-warning"></i>
+            <div class="fw-semibold">Gestión Backup</div>
+        </a>
+        <button class="quick-action-btn" onclick="showSettings()">
+            <i class="fas fa-cog fa-2x mb-2 text-secondary"></i>
+            <div class="fw-semibold">Configuración</div>
+        </button>
+    </div>
+
+    <!-- Alerts Panel -->
+    <div class="alerts-panel">
+        <h5 class="mb-3">
+            <i class="fas fa-bell me-2"></i>
+            Alertas del Sistema
+        </h5>
+        <div id="alerts-container">
+            <!-- Alerts will be populated by JavaScript -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Global variables
+let salesChart, paymentChart, productsChart, trendChart;
+let websocket = null;
+let dashboardData = {};
+let updateInterval;
+
+// Initialize dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    initializeDashboard();
+    setupWebSocket();
+    startTimeUpdates();
+    
+    // Auto refresh every 30 seconds
+    updateInterval = setInterval(loadDashboardData, 30000);
+});
+
+// Initialize all dashboard components
+async function initializeDashboard() {
+    console.log('🚀 Initializing Advanced Dashboard...');
+    
+    try {
+        await loadDashboardData();
+        initializeCharts();
+        console.log('✅ Dashboard initialized successfully');
+    } catch (error) {
+        console.error('❌ Dashboard initialization error:', error);
+        showAlert('danger', 'Error initializing dashboard');
+    }
+}
+
+// Load dashboard data from API
+async function loadDashboardData() {
+    try {
+        // Get overview stats
+        const overviewResponse = await fetch('/api/v1/stats/overview');
+        const overviewData = await overviewResponse.json();
+        
+        // Get daily sales report
+        const dailyResponse = await fetch('/api/v1/sales/reports/daily');
+        const dailyData = await dailyResponse.json();
+        
+        dashboardData = {
+            overview: overviewData,
+            daily: dailyData
+        };
+        
+        updateKPIs();
+        updateCharts();
+        updateAlerts();
+        
+    } catch (error) {
+        console.error('Error loading dashboard data:', error);
+        updateConnectionStatus('error');
+    }
+}
+
+// Update KPI cards
+function updateKPIs() {
+    const { overview, daily } = dashboardData;
+    
+    // Today's revenue
+    const revenue = daily.summary?.total_revenue || 0;
+    document.getElementById('today-revenue').textContent = `$${revenue.toFixed(2)}`;
+    
+    // Today's sales count
+    const salesCount = daily.summary?.total_sales || 0;
+    document.getElementById('today-sales').textContent = salesCount;
+    
+    // Average ticket
+    const avgTicket = daily.summary?.average_ticket || 0;
+    document.getElementById('avg-ticket').textContent = `$${avgTicket.toFixed(2)}`;
+    
+    // Low stock (simulated)
+    const lowStock = Math.floor(Math.random() * 5);
+    document.getElementById('low-stock').textContent = lowStock;
+    
+    // Update change indicators (simulated)
+    updateKPIChange('revenue-change', '+12.5%', true);
+    updateKPIChange('sales-change', `+${Math.floor(Math.random() * 10)}`, true);
+}
+
+// Update KPI change indicators
+function updateKPIChange(elementId, value, isPositive) {
+    const element = document.getElementById(elementId);
+    const icon = element.querySelector('i');
+    const span = element.querySelector('span');
+    
+    span.textContent = value;
+    element.className = `kpi-change ${isPositive ? 'positive' : 'negative'}`;
+    icon.className = `fas fa-arrow-${isPositive ? 'up' : 'down'}`;
+}
+
+// Initialize charts
+function initializeCharts() {
+    // Sales by hour chart
+    const salesCtx = document.getElementById('salesChart').getContext('2d');
+    salesChart = new Chart(salesCtx, {
+        type: 'line',
+        data: {
+            labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+            datasets: [{
+                label: 'Ventas por Hora',
+                data: [],
+                borderColor: '#2563eb',
+                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+    
+    // Payment methods chart
+    const paymentCtx = document.getElementById('paymentChart').getContext('2d');
+    paymentChart = new Chart(paymentCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Efectivo', 'Tarjeta', 'Transferencia'],
+            datasets: [{
+                data: [0, 0, 0],
+                backgroundColor: ['#10b981', '#3b82f6', '#f59e0b']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+    
+    // Top products chart
+    const productsCtx = document.getElementById('productsChart').getContext('2d');
+    productsChart = new Chart(productsCtx, {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Cantidad Vendida',
+                data: [],
+                backgroundColor: 'rgba(16, 185, 129, 0.8)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+    
+    // Sales trend chart
+    const trendCtx = document.getElementById('trendChart').getContext('2d');
+    trendChart = new Chart(trendCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Ventas Diarias',
+                data: [],
+                borderColor: '#ef4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+}
+
+// Update charts with current data
+function updateCharts() {
+    const { daily } = dashboardData;
+    
+    // Update sales chart
+    if (daily.hourly_sales) {
+        const hourlyData = Array.from({length: 24}, (_, i) => {
+            return daily.hourly_sales[i]?.revenue || 0;
+        });
+        salesChart.data.datasets[0].data = hourlyData;
+        salesChart.update();
+    }
+    
+    // Update payment methods chart
+    if (daily.payment_methods) {
+        const methods = daily.payment_methods;
+        paymentChart.data.datasets[0].data = [
+            methods.cash || 0,
+            methods.card || 0,
+            methods.transfer || 0
+        ];
+        paymentChart.update();
+    }
+    
+    // Simulate top products data
+    const sampleProducts = ['Coca Cola', 'Papas Sabritas', 'Pan Bimbo', 'Leche Lala', 'Agua Bonafont'];
+    const sampleData = sampleProducts.map(() => Math.floor(Math.random() * 20) + 1);
+    
+    productsChart.data.labels = sampleProducts;
+    productsChart.data.datasets[0].data = sampleData;
+    productsChart.update();
+    
+    // Simulate trend data
+    const last7Days = Array.from({length: 7}, (_, i) => {
+        const date = new Date();
+        date.setDate(date.getDate() - (6 - i));
+        return date.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' });
+    });
+    const trendData = Array.from({length: 7}, () => Math.floor(Math.random() * 5000) + 1000);
+    
+    trendChart.data.labels = last7Days;
+    trendChart.data.datasets[0].data = trendData;
+    trendChart.update();
+}
+
+// Update alerts panel
+function updateAlerts() {
+    const alertsContainer = document.getElementById('alerts-container');
+    
+    // Sample alerts - in real implementation, get from API
+    const alerts = [
+        { type: 'warning', icon: 'fa-box', message: '3 productos con stock bajo' },
+        { type: 'info', icon: 'fa-chart-line', message: 'Ventas 25% superiores al promedio' },
+        { type: 'danger', icon: 'fa-exclamation-triangle', message: 'Impresora desconectada' }
+    ];
+    
+    alertsContainer.innerHTML = alerts.map(alert => `
+        <div class="alert-item ${alert.type}">
+            <i class="fas ${alert.icon}"></i>
+            <span>${alert.message}</span>
+        </div>
+    `).join('');
+}
+
+// WebSocket connection
+function setupWebSocket() {
+    try {
+        websocket = new WebSocket('ws://localhost:3002/ws');
+        
+        websocket.onopen = function() {
+            console.log('✅ WebSocket connected');
+            updateConnectionStatus('online');
+        };
+        
+        websocket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            handleWebSocketMessage(data);
+        };
+        
+        websocket.onclose = function() {
+            console.log('❌ WebSocket disconnected');
+            updateConnectionStatus('offline');
+            // Retry connection after 5 seconds
+            setTimeout(setupWebSocket, 5000);
+        };
+        
+        websocket.onerror = function(error) {
+            console.error('WebSocket error:', error);
+            updateConnectionStatus('error');
+        };
+        
+    } catch (error) {
+        console.error('WebSocket setup error:', error);
+        updateConnectionStatus('error');
+    }
+}
+
+// Handle WebSocket messages
+function handleWebSocketMessage(data) {
+    console.log('WebSocket message:', data);
+    
+    switch (data.type) {
+        case 'new_sale':
+            // Refresh dashboard data when new sale occurs
+            loadDashboardData();
+            showNotification('Nueva venta registrada', 'success');
+            break;
+        case 'stock_alert':
+            showNotification(`Stock bajo: ${data.product}`, 'warning');
+            break;
+        case 'system_update':
+            loadDashboardData();
+            break;
+    }
+}
+
+// Update connection status indicator
+function updateConnectionStatus(status) {
+    const statusDot = document.getElementById('connection-status');
+    const statusText = document.getElementById('connection-text');
+    
+    statusDot.className = `status-dot status-${status}`;
+    
+    switch (status) {
+        case 'online':
+            statusText.textContent = 'Conectado';
+            break;
+        case 'offline':
+            statusText.textContent = 'Desconectado';
+            break;
+        case 'error':
+            statusText.textContent = 'Error';
+            break;
+    }
+}
+
+// Start time updates
+function startTimeUpdates() {
+    function updateTime() {
+        const now = new Date();
+        document.getElementById('current-time').textContent = now.toLocaleTimeString('es-ES');
+        document.getElementById('current-date').textContent = now.toLocaleDateString('es-ES', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+    }
+    
+    updateTime();
+    setInterval(updateTime, 1000);
+}
+
+// Quick actions
+function exportReport() {
+    // Simulate report export
+    showNotification('Exportando reporte...', 'info');
+    
+    setTimeout(() => {
+        // Create and download CSV
+        const csvContent = "data:text/csv;charset=utf-8," + 
+            "Fecha,Ventas,Ingresos,Ticket Promedio\n" +
+            `${new Date().toLocaleDateString()},${dashboardData.daily?.summary?.total_sales || 0},${dashboardData.daily?.summary?.total_revenue || 0},${dashboardData.daily?.summary?.average_ticket || 0}`;
+        
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `reporte_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showNotification('Reporte exportado exitosamente', 'success');
+    }, 2000);
+}
+
+function printDailySummary() {
+    showNotification('Imprimiendo resumen...', 'info');
+    // Implementation for printing daily summary
+}
+
+function showSettings() {
+    showNotification('Configuración no disponible aún', 'warning');
+}
+
+// Notification system
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Generic alert function
+function showAlert(type, message) {
+    showNotification(message, type);
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (updateInterval) clearInterval(updateInterval);
+    if (websocket) websocket.close();
+});
+</script>
+{% endblock %}

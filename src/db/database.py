@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./barcode_scanner.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./inventario_pos_advanced.db")
 
 # Crear engine de SQLAlchemy
 engine = create_engine(
@@ -30,7 +30,18 @@ def get_db():
         db.close()
 
 
+def get_db_engine():
+    """Obtener engine de base de datos"""
+    return engine
+
+
 def create_tables():
     """Crear todas las tablas en la base de datos"""
     from .models import Base
+    Base.metadata.create_all(bind=engine)
+
+
+def create_advanced_tables():
+    """Crear tablas del sistema avanzado"""
+    from .models_advanced import Base
     Base.metadata.create_all(bind=engine)

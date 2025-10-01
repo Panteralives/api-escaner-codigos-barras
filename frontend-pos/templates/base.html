@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}POS Scanner{% endblock %}</title>
+    
+    <!-- Bootstrap 5.3 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome 6 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts - Roboto -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --pos-primary: #2c5282;
+            --pos-secondary: #4a90e2;
+            --pos-success: #28a745;
+            --pos-danger: #dc3545;
+            --pos-warning: #ffc107;
+            --pos-info: #17a2b8;
+            --pos-light: #f8f9fa;
+            --pos-dark: #212529;
+            --pos-bg: #f5f7fa;
+            --pos-card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --pos-border-radius: 12px;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--pos-bg);
+            margin: 0;
+            padding: 0;
+        }
+        
+        .pos-navbar {
+            background: linear-gradient(135deg, var(--pos-primary) 0%, var(--pos-secondary) 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            border: none;
+        }
+        
+        .pos-card {
+            border-radius: var(--pos-border-radius);
+            box-shadow: var(--pos-card-shadow);
+            border: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .pos-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .pos-btn {
+            border-radius: 8px;
+            font-weight: 500;
+            padding: 0.6rem 1.2rem;
+            border: none;
+            transition: all 0.2s ease;
+        }
+        
+        .pos-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .pos-scanner-area {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: var(--pos-border-radius);
+            padding: 2rem;
+            color: white;
+            text-align: center;
+            margin: 1rem 0;
+        }
+        
+        .pos-product-card {
+            background: white;
+            border-radius: var(--pos-border-radius);
+            padding: 1rem;
+            box-shadow: var(--pos-card-shadow);
+            transition: all 0.2s ease;
+            border-left: 4px solid var(--pos-primary);
+        }
+        
+        .pos-product-card:hover {
+            border-left-color: var(--pos-success);
+            transform: translateX(5px);
+        }
+        
+        .pos-status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .status-online { background-color: var(--pos-success); }
+        .status-offline { background-color: var(--pos-danger); }
+        .status-warning { background-color: var(--pos-warning); }
+        
+        .pos-scan-result {
+            background: linear-gradient(135deg, var(--pos-success) 0%, #20c997 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: var(--pos-border-radius);
+            margin: 1rem 0;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .pos-stats-card {
+            background: white;
+            border-radius: var(--pos-border-radius);
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: var(--pos-card-shadow);
+        }
+        
+        .pos-stats-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+        
+        .pos-sidebar {
+            background: white;
+            min-height: calc(100vh - 80px);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            padding: 1rem;
+        }
+        
+        .pos-main-content {
+            padding: 1rem;
+            min-height: calc(100vh - 80px);
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 1.2em;
+            height: 1.2em;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .pos-sidebar {
+                min-height: auto;
+                margin-bottom: 1rem;
+            }
+            
+            .pos-main-content {
+                min-height: auto;
+            }
+            
+            .pos-scanner-area {
+                padding: 1rem;
+            }
+        }
+        
+        /* WebSocket connection indicator */
+        .ws-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .ws-connected {
+            background-color: var(--pos-success);
+            color: white;
+            opacity: 0.8;
+        }
+        
+        .ws-disconnected {
+            background-color: var(--pos-danger);
+            color: white;
+        }
+        
+        .ws-connecting {
+            background-color: var(--pos-warning);
+            color: black;
+        }
+    </style>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- Indicador de conexión WebSocket -->
+    <div id="ws-indicator" class="ws-indicator ws-connecting">
+        <i class="fas fa-circle-notch fa-spin me-1"></i>
+        <span id="ws-status">Conectando...</span>
+    </div>
+    
+    <!-- Navbar -->
+    <nav class="navbar pos-navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="fas fa-cash-register me-2"></i>
+                POS Scanner
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/pos">
+                            <i class="fas fa-qrcode me-1"></i>Escanear
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/productos">
+                            <i class="fas fa-boxes me-1"></i>Productos
+                        </a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-cog me-1"></i>Sistema
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" onclick="checkSystemStatus()">
+                                <i class="fas fa-heartbeat me-2"></i>Estado del Sistema
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="#" onclick="restartSystem()">
+                                <i class="fas fa-redo me-2"></i>Reiniciar
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Contenido principal -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Modales globales -->
+    <div id="global-modals">
+        <!-- Modal de estado del sistema -->
+        <div class="modal fade" id="systemStatusModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-heartbeat me-2"></i>Estado del Sistema
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body" id="system-status-content">
+                        <div class="text-center">
+                            <div class="loading-spinner me-2"></div>
+                            Verificando sistema...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- WebSocket connection -->
+    <script>
+        // Variables globales
+        let ws = null;
+        let wsReconnectAttempts = 0;
+        let maxReconnectAttempts = 5;
+        let reconnectDelay = 1000; // 1 segundo inicial
+        
+        // Inicializar WebSocket
+        function initWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws`;
+            
+            try {
+                ws = new WebSocket(wsUrl);
+                
+                ws.onopen = function(event) {
+                    console.log('✅ WebSocket conectado');
+                    wsReconnectAttempts = 0;
+                    reconnectDelay = 1000;
+                    updateWSIndicator('connected');
+                    
+                    // Ocultar automáticamente en interfaces específicas
+                    setTimeout(() => {
+                        if (window.location.pathname === '/pos') {
+                            const indicator = document.getElementById('ws-indicator');
+                            if (indicator) {
+                                indicator.style.display = 'none';
+                            }
+                        }
+                    }, 3000);
+                };
+                
+                ws.onmessage = function(event) {
+                    try {
+                        const message = JSON.parse(event.data);
+                        handleWebSocketMessage(message);
+                    } catch (e) {
+                        console.error('Error parsing WebSocket message:', e);
+                    }
+                };
+                
+                ws.onclose = function(event) {
+                    console.log('❌ WebSocket desconectado');
+                    updateWSIndicator('disconnected');
+                    
+                    // Intentar reconectar
+                    if (wsReconnectAttempts < maxReconnectAttempts) {
+                        wsReconnectAttempts++;
+                        updateWSIndicator('connecting');
+                        setTimeout(initWebSocket, reconnectDelay);
+                        reconnectDelay *= 2; // Backoff exponencial
+                    }
+                };
+                
+                ws.onerror = function(error) {
+                    console.error('WebSocket error:', error);
+                    updateWSIndicator('disconnected');
+                };
+                
+            } catch (e) {
+                console.error('Error creating WebSocket:', e);
+                updateWSIndicator('disconnected');
+            }
+        }
+        
+        // Actualizar indicador de conexión
+        function updateWSIndicator(status) {
+            const indicator = document.getElementById('ws-indicator');
+            const statusText = document.getElementById('ws-status');
+            
+            indicator.className = 'ws-indicator ws-' + status;
+            
+            switch(status) {
+                case 'connected':
+                    statusText.innerHTML = '<i class="fas fa-check-circle me-1 text-success"></i>Conectado';
+                    break;
+                case 'disconnected':
+                    statusText.innerHTML = '<i class="fas fa-times-circle me-1 text-danger"></i>Desconectado';
+                    break;
+                case 'connecting':
+                    statusText.innerHTML = '<i class="fas fa-circle-notch fa-spin me-1"></i>Conectando...';
+                    break;
+            }
+        }
+        
+        // Manejar mensajes WebSocket
+        function handleWebSocketMessage(message) {
+            console.log('📨 WebSocket message:', message);
+            
+            // Dispatch custom event for specific message types
+            const event = new CustomEvent('websocket-message', {
+                detail: message
+            });
+            document.dispatchEvent(event);
+            
+            // Handle specific message types
+            switch(message.type) {
+                case 'scan_result':
+                    if (window.handleScanResult) {
+                        window.handleScanResult(message.data);
+                    }
+                    break;
+                    
+                case 'scanner_started':
+                case 'scanner_stopped':
+                    if (window.handleScannerStatusChange) {
+                        window.handleScannerStatusChange(message);
+                    }
+                    break;
+                    
+                case 'status_update':
+                    if (window.handleStatusUpdate) {
+                        window.handleStatusUpdate(message.data);
+                    }
+                    break;
+            }
+        }
+        
+        // Enviar mensaje WebSocket
+        function sendWebSocketMessage(message) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(message));
+                return true;
+            }
+            return false;
+        }
+        
+        // Funciones globales
+        async function checkSystemStatus() {
+            const modal = new bootstrap.Modal(document.getElementById('systemStatusModal'));
+            const content = document.getElementById('system-status-content');
+            
+            modal.show();
+            
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                
+                content.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Conexiones</h6>
+                            <ul class="list-unstyled">
+                                <li>
+                                    <span class="pos-status-indicator ${data.api_connected ? 'status-online' : 'status-offline'}"></span>
+                                    API Backend: ${data.api_connected ? 'Conectado' : 'Desconectado'}
+                                </li>
+                                <li>
+                                    <span class="pos-status-indicator status-online"></span>
+                                    WebSocket: ${wsReconnectAttempts === 0 ? 'Conectado' : 'Reconectando'}
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Scanner</h6>
+                            <ul class="list-unstyled">
+                                <li>
+                                    <span class="pos-status-indicator ${data.scanner_status.scanner_info?.keyboard_library ? 'status-online' : 'status-offline'}"></span>
+                                    Librería: ${data.scanner_status.scanner_info?.keyboard_library ? 'Disponible' : 'No disponible'}
+                                </li>
+                                <li>
+                                    <span class="pos-status-indicator ${data.scanner_status.scanner_info?.listening ? 'status-online' : 'status-offline'}"></span>
+                                    Estado: ${data.scanner_status.scanner_info?.listening ? 'Escuchando' : 'Detenido'}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <hr>
+                    <small class="text-muted">
+                        Última actualización: ${new Date(data.timestamp).toLocaleString()}
+                    </small>
+                `;
+            } catch (error) {
+                content.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Error verificando estado: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        function restartSystem() {
+            if (confirm('¿Estás seguro de que deseas reiniciar el sistema?')) {
+                alert('Función de reinicio no implementada en demo');
+            }
+        }
+        
+        // Inicializar cuando se carga la página
+        document.addEventListener('DOMContentLoaded', function() {
+            initWebSocket();
+            
+            // Ping periódico para mantener conexión
+            setInterval(() => {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    sendWebSocketMessage({ type: 'ping' });
+                }
+            }, 30000); // Cada 30 segundos
+        });
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

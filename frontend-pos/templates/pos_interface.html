@@ -1,0 +1,1295 @@
+{% extends "base.html" %}
+
+{% block title %}POS - Punto de Venta{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Layout principal POS */
+    .pos-container {
+        height: 100vh;
+        background: var(--pos-bg);
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+        margin: 0;
+        overflow: hidden;
+    }
+    
+    .pos-header {
+        background: linear-gradient(135deg, var(--pos-primary) 0%, var(--pos-secondary) 100%);
+        color: white;
+        padding: 0.75rem 1rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+        z-index: 100;
+    }
+    
+    .pos-main-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 0.5rem;
+        gap: 0.5rem;
+        overflow: hidden;
+    }
+    
+    /* Modo setup inicial */
+    .setup-mode {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        text-align: center;
+    }
+    
+    .setup-card {
+        background: white;
+        border-radius: var(--pos-border-radius);
+        padding: 3rem;
+        box-shadow: var(--pos-card-shadow);
+        max-width: 500px;
+    }
+    
+    /* Modo atención al cliente */
+    .customer-mode {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    /* Lista de productos escaneados (mitad superior) */
+    .scanned-items-area {
+        flex: 1;
+        background: white;
+        border-radius: var(--pos-border-radius);
+        box-shadow: var(--pos-card-shadow);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .scanned-items-header {
+        background: linear-gradient(135deg, var(--pos-primary) 0%, var(--pos-secondary) 100%);
+        color: white;
+        padding: 0.75rem 1rem;
+        border-radius: var(--pos-border-radius) var(--pos-border-radius) 0 0;
+        font-weight: 600;
+    }
+    
+    .scanned-items-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0;
+    }
+    
+    .scanned-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #e9ecef;
+        transition: background-color 0.2s;
+    }
+    
+    .scanned-item:hover {
+        background-color: var(--pos-light);
+    }
+    
+    .scanned-item:last-child {
+        border-bottom: none;
+    }
+    
+    .item-info {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .item-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--pos-primary);
+        color: white;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+    
+    .item-details h6 {
+        margin: 0;
+        font-weight: 600;
+        color: var(--pos-dark);
+    }
+    
+    .item-details small {
+        color: var(--pos-secondary);
+        font-size: 0.875rem;
+    }
+    
+    .item-price-qty {
+        text-align: right;
+        min-width: 120px;
+    }
+    
+    .item-price {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--pos-success);
+        margin: 0;
+    }
+    
+    .item-qty {
+        font-size: 0.9rem;
+        color: var(--pos-secondary);
+        margin: 0;
+    }
+    
+    /* Área inferior dividida en 2 - REDUCIDA para dar más espacio arriba */
+    .bottom-area {
+        height: 280px;
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    /* Panel izquierdo - Input y controles */
+    .input-panel {
+        flex: 1;
+        background: white;
+        border-radius: var(--pos-border-radius);
+        box-shadow: var(--pos-card-shadow);
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    
+    .input-section {
+        flex: 1;
+    }
+    
+    .input-group-large {
+        margin-bottom: 1rem;
+    }
+    
+    .input-group-large label {
+        font-weight: 600;
+        color: var(--pos-dark);
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .input-group-large input {
+        font-size: 1.25rem;
+        height: 3rem;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 0 1rem;
+        transition: all 0.2s;
+    }
+    
+    .input-group-large input:focus {
+        border-color: var(--pos-primary);
+        box-shadow: 0 0 0 0.2rem rgba(44, 82, 130, 0.25);
+    }
+    
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .qty-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: none;
+        background: var(--pos-primary);
+        color: white;
+        font-size: 1.25rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .qty-btn:hover {
+        background: var(--pos-secondary);
+        transform: scale(1.05);
+    }
+    
+    .qty-display {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--pos-primary);
+        min-width: 60px;
+        text-align: center;
+    }
+    
+    /* Panel derecho - Total y pago */
+    .payment-panel {
+        flex: 1;
+        background: white;
+        border-radius: var(--pos-border-radius);
+        box-shadow: var(--pos-card-shadow);
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    
+    .total-section {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .total-label {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--pos-dark);
+        margin-bottom: 0.5rem;
+    }
+    
+    .total-amount {
+        font-size: 3rem;
+        font-weight: 800;
+        color: var(--pos-success);
+        margin: 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .payment-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .btn-pay {
+        height: 60px;
+        font-size: 1.25rem;
+        font-weight: 700;
+        border-radius: 12px;
+        border: none;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+    
+    .btn-pay-primary {
+        background: linear-gradient(135deg, var(--pos-success) 0%, #20c997 100%);
+        color: white;
+    }
+    
+    .btn-pay-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
+    }
+    
+    .btn-cancel {
+        background: linear-gradient(135deg, var(--pos-danger) 0%, #e74c3c 100%);
+        color: white;
+    }
+    
+    .btn-cancel:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(220, 53, 69, 0.3);
+    }
+    
+    /* Estado vacío */
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--pos-secondary);
+        text-align: center;
+        padding: 2rem;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+    
+    /* Animaciones */
+    .slide-in {
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    .bounce-in {
+        animation: bounceIn 0.5s ease-out;
+    }
+    
+    @keyframes bounceIn {
+        0% {
+            opacity: 0;
+            transform: scale(0.3);
+        }
+        50% {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+        70% {
+            transform: scale(0.9);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .bottom-area {
+            flex-direction: column;
+            height: auto;
+        }
+        
+        .total-amount {
+            font-size: 2rem;
+        }
+        
+        .btn-pay {
+            height: 50px;
+            font-size: 1.1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pos-container">
+    <!-- Header POS Fusionado -->
+    <div class="pos-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-cash-register me-3 fs-4"></i>
+                <div>
+                    <h5 class="mb-0 fw-bold">Punto de Venta - Sistema de Escáner</h5>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div id="scanner-status-indicator" class="d-flex align-items-center">
+                    <i class="fas fa-qrcode me-2 text-light"></i>
+                    <div class="status-dot bg-secondary me-2" style="width: 12px; height: 12px; border-radius: 50%;"></div>
+                    <span id="scanner-status-text">Verificando...</span>
+                </div>
+                <button class="btn btn-outline-light btn-sm me-2" onclick="showPrinterConfig()">
+                    <i class="fas fa-print me-1"></i>Impresora
+                </button>
+                <button class="btn btn-outline-light btn-sm" onclick="exitCustomerMode()">
+                    <i class="fas fa-arrow-left me-1"></i>Salir
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Contenido Principal -->
+    <div class="pos-main-content">
+        
+        <!-- Modo Setup (Pantalla inicial) -->
+        <div id="setup-mode" class="setup-mode">
+            <div class="setup-card">
+                <div id="setup-loading" class="text-center">
+                    <i class="fas fa-circle-notch fa-spin fa-3x text-primary mb-3"></i>
+                    <h4>Inicializando Sistema...</h4>
+                    <p class="text-muted">Verificando conexiones y hardware</p>
+                </div>
+                
+                <div id="setup-ready" class="text-center" style="display: none;">
+                    <i class="fas fa-qrcode fa-4x text-success mb-3"></i>
+                    <h3 class="fw-bold mb-3">Sistema Listo</h3>
+                    <p class="text-muted mb-4">Scanner configurado y conectado a la base de datos</p>
+                    
+                    <button id="start-customer-mode" class="btn btn-success btn-lg pos-btn">
+                        <i class="fas fa-play me-2"></i>Iniciar Atención al Cliente
+                    </button>
+                </div>
+                
+                <div id="setup-error" class="text-center" style="display: none;">
+                    <i class="fas fa-exclamation-triangle fa-4x text-warning mb-3"></i>
+                    <h4 class="fw-bold mb-3">Configuración Requerida</h4>
+                    <div class="text-start mb-4">
+                        <p><strong>Para usar el scanner USB-HID:</strong></p>
+                        <ul class="text-muted">
+                            <li>Conecta tu scanner USB</li>
+                            <li>Ejecuta como administrador</li>
+                            <li>Instala: <code>pip install keyboard</code></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary pos-btn" onclick="enterTestMode()">
+                            <i class="fas fa-vial me-2"></i>Modo de Prueba
+                        </button>
+                        <button class="btn btn-outline-primary pos-btn" onclick="retrySetup()">
+                            <i class="fas fa-sync me-2"></i>Reintentar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modo Atención al Cliente -->
+        <div id="customer-mode" class="customer-mode" style="display: none;">
+            
+            <!-- Lista de productos escaneados (OPTIMIZADA - más espacio) -->
+            <div class="scanned-items-area">
+                <div class="scanned-items-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-shopping-cart me-2"></i>Productos Escaneados</span>
+                        <span id="items-count" class="badge bg-light text-dark">0 items</span>
+                    </div>
+                </div>
+                
+                <div class="scanned-items-list" id="scanned-items-list">
+                    <!-- Estado vacío inicial -->
+                    <div id="empty-cart" class="empty-state">
+                        <i class="fas fa-shopping-cart"></i>
+                        <h5>Carrito Vacío</h5>
+                        <p>Escanea productos para agregarlos a la venta</p>
+                        <small class="text-muted">Usa el campo de código de abajo o scanner USB</small>
+                    </div>
+                    
+                    <!-- Los productos escaneados aparecerán aquí -->
+                </div>
+            </div>
+            
+            <!-- Área inferior dividida en 2 -->
+            <div class="bottom-area">
+                
+                <!-- Panel izquierdo - Input y controles -->
+                <div class="input-panel">
+                    <div class="input-section">
+                        <!-- Campo de código de producto -->
+                        <div class="input-group-large">
+                            <label for="product-code-input">
+                                <i class="fas fa-barcode me-2"></i>Código del Producto
+                            </label>
+                            <input 
+                                type="text" 
+                                id="product-code-input" 
+                                class="form-control" 
+                                placeholder="Escanea o escribe el código..."
+                                list="existing-codes"
+                                autocomplete="off"
+                            >
+                        </div>
+                        
+                        <!-- Control de cantidad -->
+                        <div class="input-group-large">
+                            <label>Cantidad</label>
+                            <div class="quantity-controls">
+                                <button type="button" class="qty-btn" onclick="decreaseQty()">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <div class="qty-display" id="quantity-display">1</div>
+                                <button type="button" class="qty-btn" onclick="increaseQty()">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Datalist para autocompletado -->
+                        <datalist id="existing-codes">
+                            <!-- Se llenará dinámicamente -->
+                        </datalist>
+                    </div>
+                </div>
+                
+                <!-- Panel derecho - Total y pago -->
+                <div class="payment-panel">
+                    <div class="total-section">
+                        <div class="total-label">TOTAL A PAGAR</div>
+                        <div class="total-amount" id="total-amount">$0.00</div>
+                        <small class="text-muted" id="items-summary">0 productos</small>
+                    </div>
+                    
+                    <div class="payment-buttons">
+                        <button id="pay-btn" class="btn-pay btn-pay-primary" onclick="processPay()" disabled>
+                            <i class="fas fa-credit-card me-2"></i>PAGAR
+                        </button>
+                        <div class="d-flex gap-2">
+                            <button id="delete-last-btn" class="btn-pay" onclick="deleteLastItem()" disabled style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; flex: 1;">
+                                <i class="fas fa-times me-2"></i>Borrar Último
+                            </button>
+                            <button class="btn-pay" onclick="clearAll()" style="background: linear-gradient(135deg, #e83e8c 0%, #c73676 100%); color: white; flex: 1;">
+                                <i class="fas fa-trash me-2"></i>Limpiar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación de pago -->
+<div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-credit-card me-2"></i>Procesar Pago
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Resumen de la Venta</h6>
+                        <div id="payment-summary">
+                            <!-- Se llenará con el resumen -->
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Método de Pago</h6>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary" onclick="payWithCash()">
+                                <i class="fas fa-money-bill me-2"></i>Efectivo
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="payWithCard()">
+                                <i class="fas fa-credit-card me-2"></i>Tarjeta
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="payWithTransfer()">
+                                <i class="fas fa-exchange-alt me-2"></i>Transferencia
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de configuración de impresora -->
+<div class="modal fade" id="printerConfigModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-print me-2"></i>Configuración de Impresora
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Modo de Impresión</label>
+                    <select class="form-select" id="printer-mode">
+                        <option value="file">Archivo (Debug) - Recomendado</option>
+                        <option value="network">Impresora de Red</option>
+                    </select>
+                    <div class="form-text">Modo archivo guarda el ticket en ticket_output.bin para debug</div>
+                </div>
+                
+                <div id="network-config" style="display: none;">
+                    <div class="mb-3">
+                        <label class="form-label">IP de la Impresora</label>
+                        <input type="text" class="form-control" id="printer-ip" placeholder="192.168.1.100">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Puerto</label>
+                        <input type="number" class="form-control" id="printer-port" value="9100">
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" onclick="testPrinter()">
+                        <i class="fas fa-vial me-2"></i>Probar Impresora
+                    </button>
+                    <button class="btn btn-outline-warning" onclick="testDrawer()">
+                        <i class="fas fa-cash-register me-2"></i>Probar Cajón
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="savePrinterConfig()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Variables globales
+    let currentMode = 'setup'; // 'setup' o 'customer'
+    let cart = []; // Carrito de productos escaneados
+    let currentQuantity = 1;
+    let existingCodes = [];
+    let isScanning = false;
+    let lastScanTime = 0;
+    
+    // Configuración de impresora (guardada en localStorage)
+    let printerConfig = {
+        mode: localStorage.getItem('printer_mode') || 'file',
+        ip: localStorage.getItem('printer_ip') || '',
+        port: parseInt(localStorage.getItem('printer_port') || '9100', 10)
+    };
+    
+    // Inicializar la aplicación
+    document.addEventListener('DOMContentLoaded', function() {
+        initializePOS();
+        setupEventListeners();
+        loadExistingCodes();
+    });
+    
+    // Configurar event listeners
+    function setupEventListeners() {
+        // Input de código de producto
+        const productInput = document.getElementById('product-code-input');
+        if (productInput) {
+            productInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addProductFromInput();
+                }
+            });
+            
+            // Focus automático cuando se ingresa al modo cliente
+            productInput.addEventListener('focus', () => {
+                productInput.select();
+            });
+        }
+        
+        // Cambio de modo de impresora
+        const modeSelect = document.getElementById('printer-mode');
+        if (modeSelect) {
+            modeSelect.addEventListener('change', function() {
+                document.getElementById('network-config').style.display = this.value === 'network' ? 'block' : 'none';
+            });
+        }
+        
+        // Botón de iniciar atención al cliente
+        const startBtn = document.getElementById('start-customer-mode');
+        if (startBtn) {
+            startBtn.addEventListener('click', enterCustomerMode);
+        }
+    }
+    
+    function showPrinterConfig() {
+        // Inicializar valores actuales
+        const modeSelect = document.getElementById('printer-mode');
+        const ipInput = document.getElementById('printer-ip');
+        const portInput = document.getElementById('printer-port');
+        
+        if (modeSelect) modeSelect.value = printerConfig.mode || 'file';
+        if (ipInput) ipInput.value = printerConfig.ip || '';
+        if (portInput) portInput.value = printerConfig.port || 9100;
+        
+        document.getElementById('network-config').style.display = (printerConfig.mode === 'network') ? 'block' : 'none';
+        
+        const modal = new bootstrap.Modal(document.getElementById('printerConfigModal'));
+        modal.show();
+    }
+    
+    function savePrinterConfig() {
+        const modeSelect = document.getElementById('printer-mode');
+        const ipInput = document.getElementById('printer-ip');
+        const portInput = document.getElementById('printer-port');
+        
+        printerConfig.mode = modeSelect.value;
+        printerConfig.ip = ipInput.value.trim();
+        printerConfig.port = parseInt(portInput.value || '9100', 10);
+        
+        localStorage.setItem('printer_mode', printerConfig.mode);
+        localStorage.setItem('printer_ip', printerConfig.ip);
+        localStorage.setItem('printer_port', String(printerConfig.port));
+        
+        showAlert('success', 'Configuración de impresora guardada');
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('printerConfigModal'));
+        modal.hide();
+    }
+    
+    async function testPrinter() {
+        try {
+            const cfgQuery = printerConfig.mode === 'network'
+                ? `?mode=network&ip=${encodeURIComponent(printerConfig.ip)}&port=${encodeURIComponent(printerConfig.port)}`
+                : `?mode=file`;
+            const resp = await fetch(`http://localhost:8000/api/v1/printer/print-test${cfgQuery}`, { method: 'POST' });
+            const data = await resp.json();
+            if (data.status === 'success') {
+                showAlert('success', data.message);
+            } else {
+                showAlert('warning', data.message);
+            }
+        } catch (e) {
+            showAlert('danger', 'Error probando impresora');
+        }
+    }
+    
+    async function testDrawer() {
+        try {
+            const cfgQuery = printerConfig.mode === 'network'
+                ? `?mode=network&ip=${encodeURIComponent(printerConfig.ip)}&port=${encodeURIComponent(printerConfig.port)}`
+                : `?mode=file`;
+            const resp = await fetch(`http://localhost:8000/api/v1/printer/open-drawer${cfgQuery}`, { method: 'POST' });
+            const data = await resp.json();
+            if (data.status === 'success') {
+                showAlert('success', data.message);
+            } else {
+                showAlert('warning', data.message);
+            }
+        } catch (e) {
+            showAlert('danger', 'Error probando cajón');
+        }
+    }
+    
+    // Inicializar el sistema POS
+    async function initializePOS() {
+        console.log('🚀 Inicializando POS...');
+        
+        try {
+            // Verificar estado de la API
+            const apiStatus = await checkAPIStatus();
+            
+            // Verificar estado del scanner
+            const scannerStatus = await checkScannerStatus();
+            
+            // Actualizar interfaz según el estado
+            updateSetupInterface(apiStatus, scannerStatus);
+            
+        } catch (error) {
+            console.error('Error inicializando POS:', error);
+            showSetupError();
+        }
+    }
+    
+    // Verificar estado de la API
+    async function checkAPIStatus() {
+        try {
+            const response = await fetch('/api/status');
+            return response.ok;
+        } catch {
+            return false;
+        }
+    }
+    
+    // Verificar estado del scanner
+    async function checkScannerStatus() {
+        try {
+            const response = await fetch('/api/scanner/status');
+            const data = await response.json();
+            
+            updateScannerIndicator(data);
+            return data;
+        } catch (error) {
+            console.error('Error verificando scanner:', error);
+            return { scanner_info: { keyboard_library: false, listening: false } };
+        }
+    }
+    
+    // Actualizar indicador de estado del scanner
+    function updateScannerIndicator(statusData) {
+        const indicator = document.querySelector('.status-dot');
+        const statusText = document.getElementById('scanner-status-text');
+        
+        const isAvailable = statusData.scanner_info?.keyboard_library;
+        const isListening = statusData.scanner_info?.listening;
+        
+        if (isListening) {
+            indicator.className = 'status-dot bg-success me-2';
+            statusText.textContent = 'Escaneando';
+        } else if (isAvailable) {
+            indicator.className = 'status-dot bg-warning me-2';
+            statusText.textContent = 'Listo';
+        } else {
+            indicator.className = 'status-dot bg-danger me-2';
+            statusText.textContent = 'No Disponible';
+        }
+    }
+    
+    // Actualizar interfaz de configuración
+    function updateSetupInterface(apiStatus, scannerStatus) {
+        const loadingDiv = document.getElementById('setup-loading');
+        const readyDiv = document.getElementById('setup-ready');
+        const errorDiv = document.getElementById('setup-error');
+        
+        // Ocultar loading
+        loadingDiv.style.display = 'none';
+        
+        if (apiStatus) {
+            // Sistema listo
+            readyDiv.style.display = 'block';
+            errorDiv.style.display = 'none';
+        } else {
+            // Mostrar error
+            readyDiv.style.display = 'none';
+            errorDiv.style.display = 'block';
+        }
+    }
+    
+    // Mostrar error de configuración
+    function showSetupError() {
+        document.getElementById('setup-loading').style.display = 'none';
+        document.getElementById('setup-ready').style.display = 'none';
+        document.getElementById('setup-error').style.display = 'block';
+    }
+    
+    // Entrar en modo atención al cliente
+    async function enterCustomerMode() {
+        try {
+            // Ocultar modo setup
+            document.getElementById('setup-mode').style.display = 'none';
+            
+            // Mostrar modo cliente
+            document.getElementById('customer-mode').style.display = 'block';
+            
+            currentMode = 'customer';
+            
+            // Iniciar scanner si está disponible
+            await startScannerIfAvailable();
+            
+            // Focus en input de código
+            setTimeout(() => {
+                const input = document.getElementById('product-code-input');
+                if (input) {
+                    input.focus();
+                }
+            }, 500);
+            
+            console.log('✅ Modo atención al cliente activado');
+            
+        } catch (error) {
+            console.error('Error entrando en modo cliente:', error);
+            showAlert('danger', 'Error activando modo cliente');
+        }
+    }
+    
+    // Salir del modo cliente
+    function exitCustomerMode() {
+        if (cart.length > 0) {
+            if (!confirm('¿Seguro que deseas salir? Se perderá la venta actual.')) {
+                return;
+            }
+        }
+        
+        // Detener scanner
+        stopScannerIfActive();
+        
+        // Limpiar carrito
+        clearAll(false);
+        
+        // Mostrar modo setup
+        document.getElementById('customer-mode').style.display = 'none';
+        document.getElementById('setup-mode').style.display = 'block';
+        
+        currentMode = 'setup';
+        
+        console.log('🔙 Salida del modo cliente');
+    }
+    
+    // Iniciar scanner si está disponible
+    async function startScannerIfAvailable() {
+        try {
+            const response = await fetch('/api/scanner/start', { method: 'POST' });
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                console.log('✅ Scanner iniciado automáticamente');
+            }
+        } catch (error) {
+            console.log('ℹ️ Scanner no disponible para inicio automático');
+        }
+    }
+    
+    // Detener scanner si está activo
+    async function stopScannerIfActive() {
+        try {
+            await fetch('/api/scanner/stop', { method: 'POST' });
+        } catch (error) {
+            console.log('ℹ️ Error deteniendo scanner:', error);
+        }
+    }
+    
+    // Agregar producto desde input
+    async function addProductFromInput() {
+        const input = document.getElementById('product-code-input');
+        const codigo = input.value.trim();
+        
+        if (!codigo) {
+            showAlert('warning', 'Ingresa un código de producto');
+            return;
+        }
+        
+        await addProductToCart(codigo, currentQuantity);
+        
+        // Limpiar input y mantener focus
+        input.value = '';
+        input.focus();
+    }
+    
+    // Agregar producto al carrito
+    async function addProductToCart(codigo, cantidad = 1) {
+        try {
+            // Buscar producto en la API
+            const response = await fetch(`/api/productos/${codigo}`);
+            
+            if (response.ok) {
+                const producto = await response.json();
+                
+                // Verificar si ya existe en el carrito
+                const existingIndex = cart.findIndex(item => item.codigo === codigo);
+                
+                if (existingIndex >= 0) {
+                    // Actualizar cantidad
+                    cart[existingIndex].cantidad += cantidad;
+                    cart[existingIndex].subtotal = cart[existingIndex].precio * cart[existingIndex].cantidad;
+                } else {
+                    // Agregar nuevo producto
+                    cart.push({
+                        codigo: codigo,
+                        producto: producto,
+                        cantidad: cantidad,
+                        precio: producto.precio,
+                        subtotal: producto.precio * cantidad
+                    });
+                }
+                
+                // Actualizar interfaz
+                updateCartDisplay();
+                updateTotals();
+                
+                // Sonido o feedback de éxito
+                showAlert('success', `${producto.nombre} agregado (${cantidad})`);
+                
+            } else {
+                // Producto no encontrado
+                showAlert('warning', `Producto no encontrado: ${codigo}`);
+                
+                // Opción para agregar nuevo producto
+                if (confirm('¿Deseas agregar este producto al catálogo?')) {
+                    window.open(`/productos?new=true&codigo=${codigo}`, '_blank');
+                }
+            }
+            
+        } catch (error) {
+            console.error('Error agregando producto:', error);
+            showAlert('danger', 'Error procesando producto');
+        }
+    }
+    
+    // Actualizar visualización del carrito
+    function updateCartDisplay() {
+        const container = document.getElementById('scanned-items-list');
+        const emptyState = document.getElementById('empty-cart');
+        const itemsCount = document.getElementById('items-count');
+        
+        if (cart.length === 0) {
+            emptyState.style.display = 'block';
+            itemsCount.textContent = '0 items';
+            return;
+        }
+        
+        emptyState.style.display = 'none';
+        itemsCount.textContent = `${cart.length} item${cart.length !== 1 ? 's' : ''}`;
+        
+        const html = cart.map((item, index) => `
+            <div class="scanned-item slide-in" data-index="${index}">
+                <div class="item-info">
+                    <div class="item-icon">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <div class="item-details">
+                        <h6>${item.producto.nombre}</h6>
+                        <small>${item.producto.categoria || 'Sin categoría'} • ${item.codigo}</small>
+                    </div>
+                </div>
+                <div class="item-price-qty">
+                    <div class="item-price">$${item.subtotal.toFixed(2)}</div>
+                    <div class="item-qty">${item.cantidad} x $${item.precio.toFixed(2)}</div>
+                </div>
+                </div>
+            </div>
+        `).join('');
+        
+        container.innerHTML = html;
+        
+        // Scroll al último elemento
+        container.scrollTop = container.scrollHeight;
+    }
+    
+    // Actualizar totales
+    function updateTotals() {
+        const total = cart.reduce((sum, item) => sum + item.subtotal, 0);
+        const totalItems = cart.reduce((sum, item) => sum + item.cantidad, 0);
+        
+        document.getElementById('total-amount').textContent = `$${total.toFixed(2)}`;
+        document.getElementById('items-summary').textContent = `${totalItems} producto${totalItems !== 1 ? 's' : ''}`;
+        
+        // Habilitar/deshabilitar botones
+        const payBtn = document.getElementById('pay-btn');
+        const deleteBtn = document.getElementById('delete-last-btn');
+        
+        payBtn.disabled = cart.length === 0;
+        if (deleteBtn) deleteBtn.disabled = cart.length === 0;
+    }
+    
+    // Controles de cantidad
+    function increaseQty() {
+        if (currentQuantity < 99) {
+            currentQuantity++;
+            document.getElementById('quantity-display').textContent = currentQuantity;
+        }
+    }
+    
+    function decreaseQty() {
+        if (currentQuantity > 1) {
+            currentQuantity--;
+            document.getElementById('quantity-display').textContent = currentQuantity;
+        }
+    }
+    
+    // Borrar último producto (función optimizada)
+    function deleteLastItem() {
+        if (cart.length === 0) return;
+        
+        const lastItem = cart.pop();
+        updateCartDisplay();
+        updateTotals();
+        
+        showAlert('primary', `${lastItem.producto.nombre} eliminado`);
+    }
+    
+    // Limpiar todo
+    function clearAll(confirm = true) {
+        if (confirm && cart.length > 0) {
+            if (!window.confirm('¿Limpiar toda la venta?')) {
+                return;
+            }
+        }
+        
+        cart = [];
+        currentQuantity = 1;
+        document.getElementById('quantity-display').textContent = '1';
+        
+        updateCartDisplay();
+        updateTotals();
+        
+        if (confirm) {
+            showAlert('info', 'Venta limpiada');
+        }
+    }
+    
+    // Procesar pago
+    function processPay() {
+        if (cart.length === 0) return;
+        
+        // Preparar resumen para modal
+        const summary = cart.map(item => `
+            <div class="d-flex justify-content-between">
+                <span>${item.producto.nombre} x${item.cantidad}</span>
+                <span>$${item.subtotal.toFixed(2)}</span>
+            </div>
+        `).join('');
+        
+        const total = cart.reduce((sum, item) => sum + item.subtotal, 0);
+        
+        document.getElementById('payment-summary').innerHTML = `
+            ${summary}
+            <hr>
+            <div class="d-flex justify-content-between fw-bold">
+                <span>TOTAL:</span>
+                <span>$${total.toFixed(2)}</span>
+            </div>
+        `;
+        
+        // Mostrar modal
+        const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
+        modal.show();
+    }
+    
+    // Métodos de pago
+    function payWithCash() {
+        completeSale('Efectivo');
+    }
+    
+    function payWithCard() {
+        completeSale('Tarjeta');
+    }
+    
+    function payWithTransfer() {
+        completeSale('Transferencia');
+    }
+    
+    // Completar venta
+    async function completeSale(paymentMethod) {
+        const total = cart.reduce((sum, item) => sum + item.subtotal, 0);
+        const saleId = Date.now(); // ID único basado en timestamp
+        
+        // Cerrar modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
+        modal.hide();
+        
+        try {
+            // Preparar datos para impresión
+            const saleData = {
+                sale_id: saleId,
+                cashier: "Cajero", // Podrías obtener esto de la sesión
+                payment_method: paymentMethod,
+                paid_amount: total,
+                total: total,
+                items: cart.map(item => ({
+                    name: item.producto.nombre,
+                    price: item.precio,
+                    quantity: item.cantidad,
+                    barcode: item.codigo
+                }))
+            };
+            
+            // Imprimir ticket
+            showAlert('info', 'Imprimiendo ticket...', false);
+            const cfgQuery = printerConfig.mode === 'network'
+                ? `?mode=network&ip=${encodeURIComponent(printerConfig.ip)}&port=${encodeURIComponent(printerConfig.port)}`
+                : `?mode=file`;
+            const printResponse = await fetch(`http://localhost:8000/api/v1/printer/print-sale${cfgQuery}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(saleData)
+            });
+            
+            const printResult = await printResponse.json();
+            
+            if (printResult.status === 'success') {
+                console.log('✅ Ticket impreso:', printResult.message);
+                
+                // Abrir cajón si el pago fue en efectivo
+                if (paymentMethod === 'Efectivo') {
+                    try {
+                        const cfgQuery2 = printerConfig.mode === 'network'
+                            ? `?mode=network&ip=${encodeURIComponent(printerConfig.ip)}&port=${encodeURIComponent(printerConfig.port)}`
+                            : `?mode=file`;
+                        const drawerResponse = await fetch(`http://localhost:8000/api/v1/printer/open-drawer${cfgQuery2}`, {
+                            method: 'POST'
+                        });
+                        
+                        const drawerResult = await drawerResponse.json();
+                        if (drawerResult.status === 'success') {
+                            console.log('✅ Cajón abierto:', drawerResult.message);
+                        } else {
+                            console.warn('⚠️ Error abriendo cajón:', drawerResult.message);
+                        }
+                    } catch (drawerError) {
+                        console.error('❌ Error abriendo cajón:', drawerError);
+                    }
+                }
+                
+                // Mostrar confirmación de éxito
+                showAlert('success', `¡Venta completada! ${printResult.message}`);
+                
+            } else {
+                console.error('❌ Error imprimiendo:', printResult.message);
+                showAlert('warning', `Venta completada pero error en impresión: ${printResult.message}`);
+            }
+            
+        } catch (error) {
+            console.error('❌ Error procesando venta:', error);
+            showAlert('danger', 'Venta completada pero error en impresión. Revisar impresora.');
+        }
+        
+        // Mostrar resumen final
+        setTimeout(() => {
+            showAlert('success', `💰 ${paymentMethod} - Total: $${total.toFixed(2)} - Ticket #${saleId}`);
+        }, 500);
+        
+        // Limpiar carrito después de un momento
+        setTimeout(() => {
+            clearAll(false);
+        }, 3000);
+        
+        console.log('💰 Venta completada:', { cart, paymentMethod, total, saleId });
+    }
+    
+    // Funciones de modo de prueba
+    function enterTestMode() {
+        // Simular que el scanner está disponible
+        updateScannerIndicator({
+            scanner_info: { keyboard_library: true, listening: false }
+        });
+        
+        enterCustomerMode();
+    }
+    
+    function retrySetup() {
+        location.reload();
+    }
+    
+    // Cargar códigos para autocompletado
+    async function loadExistingCodes() {
+        try {
+            const response = await fetch('/api/productos');
+            const productos = await response.json();
+            
+            existingCodes = productos.map(p => p.codigo_barra);
+            
+            const datalist = document.getElementById('existing-codes');
+            if (datalist) {
+                datalist.innerHTML = existingCodes.map(code => 
+                    `<option value="${code}"></option>`
+                ).join('');
+            }
+            
+        } catch (error) {
+            console.error('Error cargando códigos:', error);
+        }
+    }
+    
+    // Manejar mensajes WebSocket
+    window.handleScanResult = function(data) {
+        if (currentMode === 'customer') {
+            addProductToCart(data.codigo, currentQuantity);
+        }
+    };
+    
+    window.handleScannerStatusChange = function(message) {
+        setTimeout(() => checkScannerStatus(), 500);
+    };
+    
+    // Función para mostrar alertas
+    function showAlert(type, message, autoDismiss = true) {
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        toast.style.cssText = 'top: 100px; right: 20px; z-index: 1060; max-width: 350px;';
+        
+        // Agregar spinner para alerts de info
+        const spinner = type === 'info' ? '<i class="fas fa-circle-notch fa-spin me-2"></i>' : '';
+        
+        toast.innerHTML = `
+            ${spinner}${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        if (autoDismiss) {
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, 5000);
+        }
+        
+        return toast; // Retornar para poder manipular después
+    }
+    
+    // Actualización periódica del estado
+    setInterval(() => {
+        if (currentMode === 'customer') {
+            checkScannerStatus();
+        }
+    }, 30000); // Cada 30 segundos
+</script>
+{% endblock %}

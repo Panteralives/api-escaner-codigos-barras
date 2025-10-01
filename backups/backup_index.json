@@ -1,0 +1,48 @@
+{
+  "backups": [
+    {
+      "name": "backup_manual_20250927_023035",
+      "type": "manual",
+      "timestamp": "20250927_023035",
+      "datetime": "2025-09-27T02:30:35.402626",
+      "files": [
+        {
+          "name": "database.db",
+          "type": "database",
+          "size_mb": 0.17
+        },
+        {
+          "name": "logs/backup.log",
+          "type": "log",
+          "size_mb": 0.0016
+        },
+        {
+          "name": "logs/requirements.txt",
+          "type": "log",
+          "size_mb": 0.0009
+        },
+        {
+          "name": "config/requirements.txt",
+          "type": "config",
+          "size_mb": 0.0009
+        },
+        {
+          "name": "config/.env",
+          "type": "config",
+          "size_mb": 0.0011
+        },
+        {
+          "name": "config/system_info.json",
+          "type": "system_info",
+          "size_mb": 0.0004
+        }
+      ],
+      "size_mb": 0.01,
+      "success": true,
+      "error": null,
+      "compressed": true,
+      "path": "backups\\backup_manual_20250927_023035.zip"
+    }
+  ],
+  "last_updated": "2025-09-27T02:30:35.509509"
+}

@@ -1,0 +1,12 @@
+{
+  "backup_directory": "./backups",
+  "retention_days": 30,
+  "compression": true,
+  "include_logs": true,
+  "schedule": {
+    "enabled": true,
+    "daily_time": "02:00",
+    "weekly_day": "sunday",
+    "monthly_day": 1
+  }
+}

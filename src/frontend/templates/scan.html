@@ -1,0 +1,543 @@
+{% extends "base.html" %}
+
+{% block title %}Escanear Códigos - Escáner de Códigos{% endblock %}
+
+{% block head %}
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-6">
+            <i class="fas fa-camera me-3"></i>
+            Escanear Códigos de Barras
+        </h1>
+        <p class="lead text-muted">Escanea códigos usando cámara o subiendo imágenes</p>
+    </div>
+</div>
+
+<!-- Scanner USB-HID único método visible -->
+<div class="alert alert-info">
+    <h5><i class="fas fa-keyboard me-2"></i>Scanner USB-HID</h5>
+    <p class="mb-0">Usa tu scanner USB para escanear códigos de barras directamente</p>
+</div>
+
+<!-- Contenido principal: Scanner USB-HID -->
+<div class="mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-keyboard me-2"></i>Scanner USB-HID</h5>
+        <div class="card-body">
+                <div id="usb-status" class="alert alert-info">
+                    <i class="fas fa-spinner fa-spin me-2"></i>Verificando scanner USB...
+                </div>
+                
+                <div id="usb-available" class="d-none">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Control del Scanner</h6>
+                            <div id="scanner-controls">
+                                <!-- Los controles se cargarán dinámicamente -->
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Escaneos Recientes</h6>
+                            <div id="recent-scans" class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+                                <div id="recent-scans-loading" class="text-center text-muted">
+                                    <i class="fas fa-spinner fa-spin me-2"></i>Cargando escaneos...
+                                </div>
+                                <div id="recent-scans-content" style="display: none;">
+                                    <!-- Los escaneos se cargarán aquí -->
+                                </div>
+                                <div id="no-recent-scans" class="text-center text-muted" style="display: none;">
+                                    <i class="fas fa-info-circle me-2"></i>No hay escaneos recientes
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="usb-unavailable" class="d-none">
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Scanner USB no disponible</h6>
+                        <p class="mb-2">Para usar el scanner USB-HID:</p>
+                        <ul class="mb-2">
+                            <li>Conecta tu scanner USB</li>
+                            <li>Instala: <code>pip install keyboard</code></li>
+                            <li>Ejecuta como administrador</li>
+                        </ul>
+                        <button class="btn btn-outline-info btn-sm" onclick="location.reload()">
+                            <i class="fas fa-refresh me-1"></i>Verificar de nuevo
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CÓDIGO DE RESPALDO - Funcionalidad oculta pero disponible -->
+<!--
+    Las siguientes secciones están comentadas pero se conservan para uso futuro:
+    
+    1. TAB DE SUBIR IMAGEN:
+    <div class="tab-pane fade" id="upload" role="tabpanel">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-upload me-2"></i>Subir Imagen para Escanear</h5>
+            </div>
+            <div class="card-body">
+                <form id="upload-form" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="image-file" class="form-label">Seleccionar imagen</label>
+                        <input type="file" class="form-control" id="image-file" accept="image/*" required>
+                        <div class="form-text">Formatos soportados: PNG, JPG, JPEG</div>
+                    </div>
+                    
+                    <div id="image-preview" class="mb-3 d-none">
+                        <label class="form-label">Vista previa:</label>
+                        <div class="text-center">
+                            <img id="preview-img" src="" alt="Preview" class="img-fluid" style="max-height: 300px;">
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-search me-2"></i>Escanear Imagen
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    2. TAB DE CÁMARA USB (también en respaldo):
+    Similar estructura disponible si se necesita en el futuro.
+-->
+
+<!-- Resultados del escaneo -->
+<div id="scan-results" class="mt-4" style="display: none;">
+    <div class="card border-success">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="fas fa-check-circle me-2"></i>Resultado del Escaneo</h5>
+        </div>
+        <div class="card-body">
+            <div id="scan-result-content">
+                <!-- El contenido se llenará dinámicamente -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading spinner -->
+<div id="loading-spinner" class="text-center mt-4" style="display: none;">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Escaneando...</span>
+    </div>
+    <p class="mt-2">Procesando imagen...</p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Variables globales
+let scanResults = null;
+
+// Variables globales para polling
+let scanPollingInterval = null;
+let lastScanCount = 0;
+
+// Verificar estado al cargar
+document.addEventListener('DOMContentLoaded', function() {
+    checkUSBScannerStatus();
+    loadRecentScans();
+    startScanPolling();
+});
+
+/* FUNCIONES DE RESPALDO - Comentadas pero disponibles para uso futuro
+
+// Verificar estado de cámara
+async function checkCameraStatus() {
+    try {
+        const response = await fetch('/api/camera/status');
+        const data = await response.json();
+        
+        const statusDiv = document.getElementById('camera-status');
+        const availableDiv = document.getElementById('camera-available');
+        const unavailableDiv = document.getElementById('camera-unavailable');
+        
+        if (data.available) {
+            statusDiv.className = 'alert alert-success';
+            statusDiv.innerHTML = '<i class="fas fa-check-circle me-2"></i>Cámara disponible y lista';
+            availableDiv.classList.remove('d-none');
+            unavailableDiv.classList.add('d-none');
+        } else {
+            statusDiv.className = 'alert alert-warning';
+            statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Cámara no disponible';
+            availableDiv.classList.add('d-none');
+            unavailableDiv.classList.remove('d-none');
+        }
+    } catch (error) {
+        console.error('Error checking camera:', error);
+        document.getElementById('camera-status').innerHTML = 
+            '<i class="fas fa-exclamation-triangle me-2"></i>Error verificando cámara';
+    }
+}
+*/
+
+// Verificar estado del scanner USB
+async function checkUSBScannerStatus() {
+    try {
+        const response = await fetch('/api/usb-scanner/status');
+        const data = await response.json();
+        
+        const statusDiv = document.getElementById('usb-status');
+        const availableDiv = document.getElementById('usb-available');
+        const unavailableDiv = document.getElementById('usb-unavailable');
+        
+        if (data.status === 'success') {
+            statusDiv.className = 'alert alert-success';
+            statusDiv.innerHTML = '<i class="fas fa-check-circle me-2"></i>Scanner USB disponible';
+            availableDiv.classList.remove('d-none');
+            unavailableDiv.classList.add('d-none');
+            
+            // Cargar controles del scanner
+            loadScannerControls(data.scanner_info);
+        } else {
+            statusDiv.className = 'alert alert-warning';
+            statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Scanner USB no disponible';
+            availableDiv.classList.add('d-none');
+            unavailableDiv.classList.remove('d-none');
+        }
+    } catch (error) {
+        console.error('Error checking USB scanner:', error);
+    }
+}
+
+/* FUNCIONES DE RESPALDO - Upload de imagen y cámara
+
+// Configurar upload de imagen
+function setupImageUpload() {
+    const fileInput = document.getElementById('image-file');
+    const preview = document.getElementById('image-preview');
+    const previewImg = document.getElementById('preview-img');
+    
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                preview.classList.remove('d-none');
+            };
+            reader.readAsDataURL(file);
+        } else {
+            preview.classList.add('d-none');
+        }
+    });
+    
+    // Handle form submit
+    document.getElementById('upload-form').addEventListener('submit', handleImageUpload);
+}
+
+// Escanear desde cámara
+document.getElementById('scan-camera-btn').addEventListener('click', async function() {
+    showLoading(true);
+    hideResults();
+    
+    try {
+        const response = await fetch('/api/scan/camera', {
+            method: 'POST'
+        });
+        const data = await response.json();
+        
+        showLoading(false);
+        displayScanResult(data);
+        
+    } catch (error) {
+        showLoading(false);
+        showError('Error escaneando desde cámara: ' + error.message);
+    }
+});
+
+// Manejar upload de imagen
+async function handleImageUpload(e) {
+    e.preventDefault();
+    
+    const fileInput = document.getElementById('image-file');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        showError('Por favor selecciona una imagen');
+        return;
+    }
+    
+    showLoading(true);
+    hideResults();
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+        const response = await fetch('/api/scan/image', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        
+        showLoading(false);
+        displayScanResult(data);
+        
+    } catch (error) {
+        showLoading(false);
+        showError('Error escaneando imagen: ' + error.message);
+    }
+}
+*/
+
+// Mostrar resultado del escaneo
+function displayScanResult(data) {
+    const resultsDiv = document.getElementById('scan-results');
+    const contentDiv = document.getElementById('scan-result-content');
+    
+    if (data.encontrado) {
+        contentDiv.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Código Detectado</h6>
+                    <p><strong><code>${data.codigo_barra}</code></strong></p>
+                    <p><small class="text-muted">Tipo: ${data.tipo_codigo}</small></p>
+                    <p><small class="text-muted">Escaneado: ${new Date(data.timestamp).toLocaleString()}</small></p>
+                </div>
+                <div class="col-md-6">
+                    ${data.producto ? `
+                        <h6>Producto Encontrado</h6>
+                        <p><strong>${data.producto.nombre}</strong></p>
+                        <p>Precio: <span class="text-success">$${data.producto.precio}</span></p>
+                        <p>Stock: <span class="badge ${data.producto.stock > 10 ? 'bg-success' : data.producto.stock > 0 ? 'bg-warning' : 'bg-danger'}">${data.producto.stock}</span></p>
+                        ${data.producto.categoria ? `<p>Categoría: ${data.producto.categoria}</p>` : ''}
+                    ` : `
+                        <div class="alert alert-warning">
+                            <h6>Producto no encontrado</h6>
+                            <p>El código fue detectado pero no está registrado en la base de datos.</p>
+                            <a href="/productos" class="btn btn-sm btn-primary">Agregar Producto</a>
+                        </div>
+                    `}
+                </div>
+            </div>
+        `;
+    } else {
+        contentDiv.innerHTML = `
+            <div class="alert alert-warning">
+                <h6><i class="fas fa-exclamation-triangle me-2"></i>No se detectó código de barras</h6>
+                <p class="mb-2">Consejos para mejorar la detección:</p>
+                <ul class="mb-0">
+                    <li>Asegúrate de que el código esté bien iluminado</li>
+                    <li>El código debe estar claramente visible</li>
+                    <li>Evita reflejos o sombras</li>
+                    <li>Usa una imagen de buena resolución</li>
+                </ul>
+            </div>
+        `;
+    }
+    
+    resultsDiv.style.display = 'block';
+}
+
+// Mostrar/ocultar loading
+function showLoading(show) {
+    document.getElementById('loading-spinner').style.display = show ? 'block' : 'none';
+}
+
+// Ocultar resultados
+function hideResults() {
+    document.getElementById('scan-results').style.display = 'none';
+}
+
+// Mostrar error
+function showError(message) {
+    const resultsDiv = document.getElementById('scan-results');
+    const contentDiv = document.getElementById('scan-result-content');
+    
+    contentDiv.innerHTML = `
+        <div class="alert alert-danger">
+            <h6><i class="fas fa-exclamation-triangle me-2"></i>Error</h6>
+            <p class="mb-0">${message}</p>
+        </div>
+    `;
+    
+    resultsDiv.querySelector('.card').className = 'card border-danger';
+    resultsDiv.querySelector('.card-header').className = 'card-header bg-danger text-white';
+    resultsDiv.style.display = 'block';
+}
+
+// Cargar controles del scanner USB (placeholder)
+function loadScannerControls(scannerInfo) {
+    const controlsDiv = document.getElementById('scanner-controls');
+    
+    controlsDiv.innerHTML = `
+        <p class="mb-2">Estado: <span class="badge ${scannerInfo.listening ? 'bg-success' : 'bg-secondary'}">${scannerInfo.listening ? 'Activo' : 'Inactivo'}</span></p>
+        <button class="btn btn-sm btn-primary" onclick="toggleUSBScanner()">
+            ${scannerInfo.listening ? 'Detener' : 'Iniciar'} Scanner
+        </button>
+    `;
+}
+
+// Toggle USB scanner
+async function toggleUSBScanner() {
+    // Implementar lógica para iniciar/detener scanner
+    showError('Funcionalidad en desarrollo');
+}
+*/
+
+// Cargar escaneos recientes
+async function loadRecentScans() {
+    const loadingDiv = document.getElementById('recent-scans-loading');
+    const contentDiv = document.getElementById('recent-scans-content');
+    const noScansDiv = document.getElementById('no-recent-scans');
+    
+    try {
+        const response = await fetch('/api/usb-scanner/recent-scans?limit=5');
+        const data = await response.json();
+        
+        loadingDiv.style.display = 'none';
+        
+        if (data.status === 'success' && data.escaneos && data.escaneos.length > 0) {
+            displayRecentScans(data.escaneos);
+            contentDiv.style.display = 'block';
+            noScansDiv.style.display = 'none';
+            lastScanCount = data.escaneos.length;
+        } else {
+            contentDiv.style.display = 'none';
+            noScansDiv.style.display = 'block';
+            lastScanCount = 0;
+        }
+        
+    } catch (error) {
+        console.error('Error loading recent scans:', error);
+        loadingDiv.innerHTML = '<span class="text-danger"><i class="fas fa-exclamation-triangle me-1"></i>Error cargando escaneos</span>';
+    }
+}
+
+// Mostrar escaneos recientes con productos
+function displayRecentScans(escaneos) {
+    const contentDiv = document.getElementById('recent-scans-content');
+    
+    const scansHtml = escaneos.map(scan => {
+        const timeAgo = getTimeAgo(new Date(scan.timestamp));
+        const isFound = scan.encontrado;
+        
+        return `
+            <div class="card mb-2 ${isFound ? 'border-success' : 'border-warning'}">
+                <div class="card-body py-2">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center">
+                                <i class="fas ${isFound ? 'fa-check-circle text-success' : 'fa-question-circle text-warning'} me-2"></i>
+                                <div>
+                                    <strong><code>${scan.codigo_barra}</code></strong>
+                                    <br>
+                                    <small class="text-muted">${timeAgo}</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            ${isFound && scan.producto ? `
+                                <div>
+                                    <strong>${scan.producto.nombre}</strong>
+                                    <br>
+                                    <span class="text-success">$${scan.producto.precio}</span>
+                                    <span class="badge ${scan.producto.stock > 10 ? 'bg-success' : scan.producto.stock > 0 ? 'bg-warning' : 'bg-danger'} ms-2">
+                                        Stock: ${scan.producto.stock}
+                                    </span>
+                                </div>
+                            ` : `
+                                <div class="text-muted">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    Producto no encontrado en la base de datos
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    contentDiv.innerHTML = scansHtml;
+}
+
+// Función para calcular "hace X tiempo"
+function getTimeAgo(date) {
+    const now = new Date();
+    const diffMs = now - date;
+    const diffSeconds = Math.floor(diffMs / 1000);
+    
+    if (diffSeconds < 60) {
+        return 'Hace unos segundos';
+    } else if (diffSeconds < 3600) {
+        const minutes = Math.floor(diffSeconds / 60);
+        return `Hace ${minutes} minuto${minutes > 1 ? 's' : ''}`;
+    } else {
+        const hours = Math.floor(diffSeconds / 3600);
+        return `Hace ${hours} hora${hours > 1 ? 's' : ''}`;
+    }
+}
+
+// Iniciar polling para actualizaciones automáticas
+function startScanPolling() {
+    // Verificar nuevos escaneos cada 3 segundos
+    scanPollingInterval = setInterval(async () => {
+        try {
+            const response = await fetch('/api/usb-scanner/recent-scans?limit=1');
+            const data = await response.json();
+            
+            if (data.status === 'success' && data.escaneos && data.escaneos.length > 0) {
+                const latestScan = data.escaneos[0];
+                const scanTime = new Date(latestScan.timestamp);
+                const now = new Date();
+                
+                // Si hay un escaneo muy reciente (últimos 5 segundos), recargar la lista
+                if ((now - scanTime) < 5000) {
+                    loadRecentScans();
+                    
+                    // Mostrar notificación de nuevo escaneo
+                    showScanNotification(latestScan);
+                }
+            }
+        } catch (error) {
+            console.error('Error checking for new scans:', error);
+        }
+    }, 3000);
+}
+
+// Mostrar notificación de nuevo escaneo
+function showScanNotification(scan) {
+    const isFound = scan.encontrado;
+    const message = isFound ? 
+        `¡Producto escaneado! ${scan.producto.nombre}` : 
+        `Código escaneado: ${scan.codigo_barra} (No encontrado en BD)`;
+    
+    // Crear notificación temporal
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${isFound ? 'success' : 'warning'} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        <strong><i class="fas ${isFound ? 'fa-check-circle' : 'fa-exclamation-triangle'} me-2"></i>¡Nuevo escaneo!</strong>
+        <br>${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remover después de 5 segundos
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 5000);
+}
+{% endblock %}

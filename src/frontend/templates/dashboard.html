@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Escáner de Códigos{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-6">
+            <i class="fas fa-tachometer-alt me-3"></i>
+            Dashboard
+        </h1>
+        <p class="lead text-muted">Panel de control del sistema de escáner de códigos</p>
+    </div>
+</div>
+
+<!-- Estadísticas principales -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card card-dashboard text-center h-100">
+            <div class="card-body">
+                <div class="display-6 text-primary mb-2">
+                    <i class="fas fa-boxes"></i>
+                </div>
+                <h5 class="card-title">Productos</h5>
+                <h2 class="text-primary">{{ total_productos }}</h2>
+                <p class="text-muted">Registrados</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card card-dashboard text-center h-100">
+            <div class="card-body">
+                <div class="display-6 text-success mb-2">
+                    <i class="fas fa-wifi"></i>
+                </div>
+                <h5 class="card-title">API Status</h5>
+                <h4 class="{% if api_status %}text-success{% else %}text-danger{% endif %}">
+                    {% if api_status %}Conectada{% else %}Desconectada{% endif %}
+                </h4>
+                <p class="text-muted">Backend</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card card-dashboard text-center h-100">
+            <div class="card-body">
+                <div class="display-6 text-info mb-2">
+                    <i class="fas fa-camera"></i>
+                </div>
+                <h5 class="card-title">Escáner</h5>
+                <h4 class="text-info">Disponible</h4>
+                <p class="text-muted">Cámara/USB</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card card-dashboard text-center h-100">
+            <div class="card-body">
+                <div class="display-6 text-warning mb-2">
+                    <i class="fas fa-history"></i>
+                </div>
+                <h5 class="card-title">Historial</h5>
+                <h4 class="text-warning">Activo</h4>
+                <p class="text-muted">Escaneos</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Acciones rápidas -->
+<div class="row mb-4">
+    <div class="col">
+        <h3><i class="fas fa-bolt me-2"></i>Acciones Rápidas</h3>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="display-6 text-primary mb-3">
+                    <i class="fas fa-qrcode"></i>
+                </div>
+                <h5 class="card-title">Escanear Código</h5>
+                <p class="card-text">Usa la cámara o sube una imagen para escanear códigos de barras</p>
+                <a href="/scan" class="btn btn-primary btn-lg">
+                    <i class="fas fa-camera me-2"></i>Escanear Ahora
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="display-6 text-success mb-3">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <h5 class="card-title">Agregar Producto</h5>
+                <p class="card-text">Registra nuevos productos en el sistema de inventario</p>
+                <a href="/productos" class="btn btn-success btn-lg">
+                    <i class="fas fa-plus me-2"></i>Nuevo Producto
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="display-6 text-info mb-3">
+                    <i class="fas fa-list"></i>
+                </div>
+                <h5 class="card-title">Ver Productos</h5>
+                <p class="card-text">Consulta y gestiona todos los productos registrados</p>
+                <a href="/productos" class="btn btn-info btn-lg">
+                    <i class="fas fa-list me-2"></i>Ver Lista
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de productos recientes -->
+{% if productos %}
+<div class="row">
+    <div class="col">
+        <h3><i class="fas fa-clock me-2"></i>Productos Recientes</h3>
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Código</th>
+                                <th>Nombre</th>
+                                <th>Precio</th>
+                                <th>Stock</th>
+                                <th>Categoría</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for producto in productos[:5] %}
+                            <tr>
+                                <td><code>{{ producto.codigo_barra }}</code></td>
+                                <td><strong>{{ producto.nombre }}</strong></td>
+                                <td class="text-success">${{ "%.2f"|format(producto.precio) }}</td>
+                                <td>
+                                    <span class="badge {% if producto.stock > 10 %}bg-success{% elif producto.stock > 0 %}bg-warning{% else %}bg-danger{% endif %}">
+                                        {{ producto.stock }}
+                                    </span>
+                                </td>
+                                <td>{{ producto.categoria or 'Sin categoría' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if productos|length > 5 %}
+                <div class="text-center mt-3">
+                    <a href="/productos" class="btn btn-outline-primary">
+                        Ver todos los productos ({{ productos|length }})
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="row">
+    <div class="col">
+        <div class="alert alert-info text-center">
+            <h4><i class="fas fa-info-circle me-2"></i>No hay productos registrados</h4>
+            <p>Comienza agregando productos al sistema para poder escanear códigos.</p>
+            <a href="/productos" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Agregar Primer Producto
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Actualizar página cada 30 segundos para refrescar estado API
+setTimeout(function() {
+    location.reload();
+}, 30000);
+
+// Hacer cards clickeables
+document.querySelectorAll('.card-dashboard').forEach(function(card) {
+    card.addEventListener('click', function() {
+        // Lógica futura para navegación rápida
+        console.log('Card clicked:', this.querySelector('.card-title').textContent);
+    });
+});
+</script>
+{% endblock %}

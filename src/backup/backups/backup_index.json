@@ -1,0 +1,74 @@
+{
+  "backups": [
+    {
+      "name": "backup_manual_20250927_020827",
+      "type": "manual",
+      "timestamp": "20250927_020827",
+      "datetime": "2025-09-27T02:08:27.393476",
+      "files": [
+        {
+          "name": "logs/backup.log",
+          "type": "log",
+          "size_mb": 0.0004
+        },
+        {
+          "name": "config/system_info.json",
+          "type": "system_info",
+          "size_mb": 0.0004
+        }
+      ],
+      "size_mb": 0.0,
+      "success": true,
+      "error": null,
+      "compressed": true,
+      "path": "backups\\backup_manual_20250927_020827.zip"
+    },
+    {
+      "name": "backup_manual_20250927_021829",
+      "type": "manual",
+      "timestamp": "20250927_021829",
+      "datetime": "2025-09-27T02:18:29.945977",
+      "files": [
+        {
+          "name": "logs/backup.log",
+          "type": "log",
+          "size_mb": 0.0014
+        },
+        {
+          "name": "config/system_info.json",
+          "type": "system_info",
+          "size_mb": 0.0004
+        }
+      ],
+      "size_mb": 0.0,
+      "success": true,
+      "error": null,
+      "compressed": true,
+      "path": "backups\\backup_manual_20250927_021829.zip"
+    },
+    {
+      "name": "backup_manual_20250927_023018",
+      "type": "manual",
+      "timestamp": "20250927_023018",
+      "datetime": "2025-09-27T02:30:18.209621",
+      "files": [
+        {
+          "name": "logs/backup.log",
+          "type": "log",
+          "size_mb": 0.0024
+        },
+        {
+          "name": "config/system_info.json",
+          "type": "system_info",
+          "size_mb": 0.0004
+        }
+      ],
+      "size_mb": 0.0,
+      "success": true,
+      "error": null,
+      "compressed": true,
+      "path": "backups\\backup_manual_20250927_023018.zip"
+    }
+  ],
+  "last_updated": "2025-09-27T02:30:18.272668"
+}

@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Backups - POS Avanzado</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .backup-card {
+            border-left: 4px solid #0d6efd;
+            transition: all 0.3s ease;
+        }
+        .backup-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .backup-success {
+            border-left-color: #198754;
+        }
+        .backup-error {
+            border-left-color: #dc3545;
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        .backup-type-badge {
+            font-size: 0.75rem;
+        }
+        .file-drop-zone {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        .file-drop-zone:hover {
+            border-color: #0d6efd;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-shield-check"></i> Gestión de Backups
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="index.html">
+                    <i class="bi bi-house"></i> Inicio
+                </a>
+                <a class="nav-link" href="dashboard.html">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <h2><i class="bi bi-shield-check text-primary"></i> Sistema de Backup</h2>
+                <p class="text-muted">Gestiona los backups automáticos y manuales del sistema POS</p>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row mb-4" id="statsSection">
+            <div class="col-md-3">
+                <div class="card stats-card h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-archive-fill display-4 mb-2"></i>
+                        <h4 id="totalBackups">-</h4>
+                        <p class="mb-0">Total Backups</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-check-circle-fill display-4 mb-2"></i>
+                        <h4 id="successRate">-</h4>
+                        <p class="mb-0">Tasa de Éxito</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-hdd-fill display-4 mb-2"></i>
+                        <h4 id="totalSize">-</h4>
+                        <p class="mb-0">Espacio Usado</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-clock-fill display-4 mb-2"></i>
+                        <div id="schedulerStatus">
+                            <h6 id="schedulerText">-</h6>
+                            <p class="mb-0">Scheduler</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions Panel -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-plus-circle"></i> Crear Backup</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <button id="createManualBtn" class="btn btn-primary w-100">
+                                    <i class="bi bi-archive"></i> Backup Manual
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button id="createEmergencyBtn" class="btn btn-danger w-100">
+                                    <i class="bi bi-exclamation-triangle"></i> Emergencia
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-gear"></i> Configuración</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <button id="schedulerToggle" class="btn btn-outline-success w-100">
+                                    <i class="bi bi-play"></i> <span id="schedulerBtnText">Iniciar</span>
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button id="configBtn" class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#configModal">
+                                    <i class="bi bi-sliders"></i> Configurar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Backups List -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="bi bi-list-ul"></i> Lista de Backups</h5>
+                <div>
+                    <button id="refreshBtn" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-clockwise"></i> Actualizar
+                    </button>
+                    <select id="typeFilter" class="form-select form-select-sm d-inline-block w-auto ms-2">
+                        <option value="">Todos los tipos</option>
+                        <option value="manual">Manual</option>
+                        <option value="scheduled">Programado</option>
+                        <option value="emergency">Emergencia</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="loadingBackups" class="loading">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <p>Cargando backups...</p>
+                </div>
+                
+                <div id="backupsList" class="row">
+                    <!-- Los backups se cargarán aquí dinámicamente -->
+                </div>
+                
+                <div id="noBackups" class="text-center py-5" style="display: none;">
+                    <i class="bi bi-inbox display-1 text-muted"></i>
+                    <h4 class="text-muted">No hay backups disponibles</h4>
+                    <p class="text-muted">Crea tu primer backup usando los botones de arriba</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuration Modal -->
+    <div class="modal fade" id="configModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-sliders"></i> Configuración de Backup
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="configForm">
+                        <div class="mb-3">
+                            <label class="form-label">Frecuencia de Backup</label>
+                            <select class="form-select" id="scheduleType">
+                                <option value="daily">Diario</option>
+                                <option value="hourly">Cada hora</option>
+                                <option value="weekly">Semanal</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Hora de Ejecución</label>
+                            <input type="time" class="form-control" id="scheduleTime" value="02:00">
+                            <small class="text-muted">Solo aplica para backup diario y semanal</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Máximo de Backups</label>
+                            <input type="number" class="form-control" id="maxBackups" min="5" max="100" value="30">
+                            <small class="text-muted">Número máximo de backups a mantener</small>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="compressBackups" checked>
+                                <label class="form-check-label">
+                                    Comprimir backups (recomendado)
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="includeLogs" checked>
+                                <label class="form-check-label">
+                                    Incluir archivos de log
+                                </label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="saveConfigBtn">
+                        <i class="bi bi-check"></i> Guardar Configuración
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Container -->
+    <div id="alertContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+        <!-- Alerts will be inserted here -->
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Configuration
+        const API_BASE = 'http://localhost:8001/api/v1';
+        let authToken = localStorage.getItem('pos_token');
+        let backupsData = [];
+
+        // API Functions
+        async function apiCall(endpoint, options = {}) {
+            const url = `${API_BASE}${endpoint}`;
+            const config = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+                },
+                ...options
+            };
+            
+            try {
+                const response = await fetch(url, config);
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.detail || `HTTP ${response.status}`);
+                }
+                
+                return data;
+            } catch (error) {
+                console.error(`API Error: ${endpoint}`, error);
+                throw error;
+            }
+        }
+
+        // UI Functions
+        function showAlert(message, type = 'info') {
+            const alertId = Date.now();
+            const alertHtml = `
+                <div id="alert-${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            document.getElementById('alertContainer').insertAdjacentHTML('beforeend', alertHtml);
+            
+            // Auto dismiss after 5 seconds
+            setTimeout(() => {
+                const alert = document.getElementById(`alert-${alertId}`);
+                if (alert) {
+                    alert.remove();
+                }
+            }, 5000);
+        }
+
+        function formatFileSize(mb) {
+            if (mb < 1) {
+                return `${(mb * 1024).toFixed(1)} KB`;
+            } else if (mb > 1024) {
+                return `${(mb / 1024).toFixed(1)} GB`;
+            }
+            return `${mb.toFixed(1)} MB`;
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleString('es-ES', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function getBackupTypeClass(type) {
+            switch(type) {
+                case 'manual': return 'primary';
+                case 'scheduled': return 'success';
+                case 'emergency': return 'danger';
+                default: return 'secondary';
+            }
+        }
+
+        function getBackupTypeIcon(type) {
+            switch(type) {
+                case 'manual': return 'hand-thumbs-up';
+                case 'scheduled': return 'clock';
+                case 'emergency': return 'exclamation-triangle';
+                default: return 'archive';
+            }
+        }
+
+        // Backup Functions
+        async function loadStats() {
+            try {
+                const [statsData, schedulerData] = await Promise.all([
+                    apiCall('/backup/stats'),
+                    apiCall('/backup/scheduler/status')
+                ]);
+
+                const stats = statsData.stats;
+                const scheduler = schedulerData.scheduler;
+
+                document.getElementById('totalBackups').textContent = stats.total_backups;
+                document.getElementById('successRate').textContent = `${stats.success_rate}%`;
+                document.getElementById('totalSize').textContent = formatFileSize(stats.total_size_mb);
+                
+                const schedulerText = scheduler.running ? 'Activo' : 'Inactivo';
+                document.getElementById('schedulerText').textContent = schedulerText;
+                
+                // Update scheduler button
+                const schedulerBtn = document.getElementById('schedulerToggle');
+                const schedulerBtnText = document.getElementById('schedulerBtnText');
+                
+                if (scheduler.running) {
+                    schedulerBtn.className = 'btn btn-outline-danger w-100';
+                    schedulerBtn.innerHTML = '<i class="bi bi-stop"></i> <span id="schedulerBtnText">Detener</span>';
+                    schedulerBtnText.textContent = 'Detener';
+                } else {
+                    schedulerBtn.className = 'btn btn-outline-success w-100';
+                    schedulerBtn.innerHTML = '<i class="bi bi-play"></i> <span id="schedulerBtnText">Iniciar</span>';
+                    schedulerBtnText.textContent = 'Iniciar';
+                }
+                
+            } catch (error) {
+                showAlert('Error cargando estadísticas: ' + error.message, 'danger');
+            }
+        }
+
+        async function loadBackups() {
+            const loadingDiv = document.getElementById('loadingBackups');
+            const backupsList = document.getElementById('backupsList');
+            const noBackups = document.getElementById('noBackups');
+            
+            loadingDiv.style.display = 'block';
+            backupsList.style.display = 'none';
+            noBackups.style.display = 'none';
+            
+            try {
+                const typeFilter = document.getElementById('typeFilter').value;
+                const endpoint = typeFilter ? `/backup/list?backup_type=${typeFilter}` : '/backup/list';
+                
+                const data = await apiCall(endpoint);
+                backupsData = data.backups;
+                
+                loadingDiv.style.display = 'none';
+                
+                if (backupsData.length === 0) {
+                    noBackups.style.display = 'block';
+                    return;
+                }
+                
+                backupsList.style.display = 'flex';
+                renderBackups();
+                
+            } catch (error) {
+                loadingDiv.style.display = 'none';
+                showAlert('Error cargando backups: ' + error.message, 'danger');
+            }
+        }
+
+        function renderBackups() {
+            const backupsList = document.getElementById('backupsList');
+            
+            const backupsHtml = backupsData.map(backup => {
+                const typeClass = getBackupTypeClass(backup.type);
+                const typeIcon = getBackupTypeIcon(backup.type);
+                const cardClass = backup.success ? 'backup-success' : 'backup-error';
+                
+                return `
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card backup-card ${cardClass}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <span class="badge bg-${typeClass} backup-type-badge">
+                                        <i class="bi bi-${typeIcon}"></i> ${backup.type.toUpperCase()}
+                                    </span>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                            <i class="bi bi-three-dots"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#" onclick="downloadBackup('${backup.name}')">
+                                                <i class="bi bi-download"></i> Descargar
+                                            </a></li>
+                                            ${authToken && backup.success ? `
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item text-danger" href="#" onclick="deleteBackup('${backup.name}')">
+                                                    <i class="bi bi-trash"></i> Eliminar
+                                                </a></li>
+                                            ` : ''}
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                <h6 class="card-title text-truncate" title="${backup.name}">
+                                    ${backup.name}
+                                </h6>
+                                
+                                <div class="row text-muted small">
+                                    <div class="col-6">
+                                        <i class="bi bi-calendar"></i> ${formatDate(backup.created_at)}
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <i class="bi bi-hdd"></i> ${formatFileSize(backup.size_mb)}
+                                    </div>
+                                </div>
+                                
+                                <div class="row text-muted small mt-1">
+                                    <div class="col-6">
+                                        <i class="bi bi-files"></i> ${backup.files_count} archivos
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        ${backup.compressed ? '<i class="bi bi-file-zip text-success"></i> ZIP' : '<i class="bi bi-folder"></i> Carpeta'}
+                                    </div>
+                                </div>
+                                
+                                ${!backup.success ? `
+                                    <div class="alert alert-danger alert-sm mt-2 mb-0">
+                                        <small><i class="bi bi-exclamation-triangle"></i> ${backup.error || 'Error desconocido'}</small>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            backupsList.innerHTML = backupsHtml;
+        }
+
+        async function createBackup(type) {
+            const btnId = type === 'emergency' ? 'createEmergencyBtn' : 'createManualBtn';
+            const btn = document.getElementById(btnId);
+            const originalHtml = btn.innerHTML;
+            
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner-border spinner-border-sm"></div> Creando...';
+            
+            try {
+                const endpoint = type === 'emergency' ? '/backup/emergency' : '/backup/create';
+                const body = type === 'emergency' ? {} : { type: 'manual' };
+                
+                const data = await apiCall(endpoint, {
+                    method: 'POST',
+                    body: JSON.stringify(body)
+                });
+                
+                showAlert(`Backup ${type} creado exitosamente: ${data.backup.name}`, 'success');
+                await loadBackups();
+                await loadStats();
+                
+            } catch (error) {
+                showAlert(`Error creando backup ${type}: ` + error.message, 'danger');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        }
+
+        async function toggleScheduler() {
+            const btn = document.getElementById('schedulerToggle');
+            const schedulerText = document.getElementById('schedulerBtnText');
+            const isRunning = schedulerText.textContent === 'Detener';
+            
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner-border spinner-border-sm"></div> Procesando...';
+            
+            try {
+                const endpoint = isRunning ? '/backup/scheduler/stop' : '/backup/scheduler/start';
+                const data = await apiCall(endpoint, { method: 'POST' });
+                
+                showAlert(data.message, 'success');
+                await loadStats();
+                
+            } catch (error) {
+                showAlert('Error con el scheduler: ' + error.message, 'danger');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        }
+
+        async function downloadBackup(backupName) {
+            try {
+                const response = await fetch(`${API_BASE}/backup/download/${backupName}`, {
+                    headers: {
+                        ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Error descargando backup');
+                }
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${backupName}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                showAlert('Descarga iniciada', 'success');
+                
+            } catch (error) {
+                showAlert('Error descargando backup: ' + error.message, 'danger');
+            }
+        }
+
+        async function deleteBackup(backupName) {
+            if (!confirm(`¿Estás seguro de eliminar el backup "${backupName}"?`)) {
+                return;
+            }
+            
+            try {
+                await apiCall(`/backup/delete/${backupName}`, { method: 'DELETE' });
+                showAlert(`Backup "${backupName}" eliminado`, 'success');
+                await loadBackups();
+                await loadStats();
+                
+            } catch (error) {
+                showAlert('Error eliminando backup: ' + error.message, 'danger');
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('createManualBtn').addEventListener('click', () => createBackup('manual'));
+        document.getElementById('createEmergencyBtn').addEventListener('click', () => createBackup('emergency'));
+        document.getElementById('schedulerToggle').addEventListener('click', toggleScheduler);
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+            loadBackups();
+            loadStats();
+        });
+        document.getElementById('typeFilter').addEventListener('change', loadBackups);
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is authenticated
+            if (!authToken) {
+                showAlert('No estás autenticado. Algunas funciones pueden no estar disponibles.', 'warning');
+            }
+            
+            loadStats();
+            loadBackups();
+            
+            // Refresh every 30 seconds
+            setInterval(() => {
+                loadStats();
+            }, 30000);
+        });
+    </script>
+</body>
+</html>

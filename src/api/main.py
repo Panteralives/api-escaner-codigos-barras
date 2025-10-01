@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 
 from ..db.database import create_tables
 from ..db.init_db import init_database
-from .routes import productos, scanner, auth
+from .routes import productos, scanner, auth, usb_scanner, printer
 
 # Configurar logging
 logging.basicConfig(
@@ -85,7 +85,9 @@ app.add_middleware(
 # Incluir rutas
 app.include_router(productos.router, prefix="/api/v1")
 app.include_router(scanner.router, prefix="/api/v1")
+app.include_router(usb_scanner.router, prefix="/api/v1")
 app.include_router(auth.router, prefix="/api/v1")
+app.include_router(printer.router, prefix="/api/v1")
 
 
 @app.get("/")
@@ -114,7 +116,9 @@ async def api_info():
         "endpoints": {
             "productos": "/api/v1/productos",
             "scanner": "/api/v1/scan",
+            "usb_scanner": "/api/v1/usb-scanner",
             "auth": "/api/v1/auth",
+            "printer": "/api/v1/printer",
             "docs": "/docs",
             "health": "/health"
         }

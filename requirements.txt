@@ -35,3 +35,19 @@ python-dotenv==1.0.0
 black==23.11.0
 flake8==6.1.0
 mypy==1.7.1
+
+# Hardware específico para producción
+pyserial==3.5
+pyusb==1.2.1
+psutil==5.9.6
+
+# Autostart y servicios del sistema
+schedule==1.2.0
+watchdog==3.0.0
+
+# Interfaz mejorada para pantalla completa
+tkinter-tooltip==2.1.0
+customtkinter==5.2.0
+
+# Scanner USB-HID (funciona como teclado)
+keyboard==0.13.5

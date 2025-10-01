@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Escáner de Códigos{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <div class="display-4 text-primary mb-3">
+                        <i class="fas fa-user-lock"></i>
+                    </div>
+                    <h3 class="card-title">Iniciar Sesión</h3>
+                    <p class="text-muted">Accede al sistema de escáner</p>
+                </div>
+
+                {% if error %}
+                <div class="alert alert-danger" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    {{ error }}
+                </div>
+                {% endif %}
+
+                <form method="post" action="/login">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">
+                            <i class="fas fa-user me-1"></i>Usuario
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="username" 
+                               name="username" 
+                               placeholder="admin" 
+                               required>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="password" class="form-label">
+                            <i class="fas fa-lock me-1"></i>Contraseña
+                        </label>
+                        <input type="password" 
+                               class="form-control" 
+                               id="password" 
+                               name="password" 
+                               placeholder="••••••••" 
+                               required>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>
+                            Iniciar Sesión
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="card-footer bg-light text-center">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Credenciales por defecto: admin / admin123
+                </small>
+            </div>
+        </div>
+        
+        <!-- Información de ayuda -->
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-question-circle me-2"></i>
+                Información de Acceso
+            </div>
+            <div class="card-body">
+                <h6>Credenciales predeterminadas:</h6>
+                <ul class="list-unstyled">
+                    <li><strong>Usuario:</strong> <code>admin</code></li>
+                    <li><strong>Contraseña:</strong> <code>admin123</code></li>
+                </ul>
+                
+                <hr>
+                
+                <h6>Problemas de acceso:</h6>
+                <ul class="small">
+                    <li>Verifique que el backend esté ejecutándose</li>
+                    <li>Revise la conexión a la base de datos</li>
+                    <li>Asegúrese de usar las credenciales correctas</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Enfocar automáticamente el campo usuario
+document.getElementById('username').focus();
+
+// Validación simple del formulario
+document.querySelector('form').addEventListener('submit', function(e) {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value.trim();
+    
+    if (!username || !password) {
+        e.preventDefault();
+        alert('Por favor, complete todos los campos');
+        return;
+    }
+});
+</script>
+{% endblock %}
