@@ -1,0 +1,44 @@
+import type { Product } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Trash2 } from 'lucide-react';
+
+type ActionButtonsProps = {
+  onClearAll: () => void;
+  onCancelLast: () => void;
+  lastProduct: Product | undefined;
+};
+
+export function ActionButtons({ onClearAll, onCancelLast, lastProduct }: ActionButtonsProps) {
+  return (
+    <div className="flex-1 flex flex-col gap-4">
+      <Button size="lg" className="w-full h-16 text-xl bg-accent hover:bg-accent/90">
+        PAGAR
+      </Button>
+      <Button 
+        size="lg" 
+        variant="secondary"
+        className="w-full h-auto py-3" 
+        disabled={!lastProduct} 
+        onClick={onCancelLast}
+      >
+        <div className="flex flex-col items-center">
+          <span className="text-base font-semibold">Cancelar Último Producto</span>
+          {lastProduct ? (
+            <span className="text-xs text-muted-foreground font-mono">{lastProduct.id}</span>
+          ) : (
+             <span className="text-xs text-muted-foreground font-mono">-</span>
+          )}
+        </div>
+      </Button>
+      <Button 
+        size="lg" 
+        variant="destructive" 
+        className="w-full h-16 text-xl mt-auto" 
+        onClick={onClearAll}
+      >
+        <Trash2 className="mr-3 h-6 w-6" />
+        LIMPIAR TODO
+      </Button>
+    </div>
+  );
+}
