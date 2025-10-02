@@ -5,7 +5,7 @@
   },
   "api": {
     "host": "localhost",
-    "port": 8001,
+    "port": 8000,
     "debug": true
   },
   "security": {

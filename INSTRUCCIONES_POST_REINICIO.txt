@@ -1,0 +1,61 @@
+============================================================
+INSTRUCCIONES DESPUÉS DEL REINICIO - SISTEMA POS
+============================================================
+
+Fecha: 02 Oct 2025, 22:47 UTC
+Estado: Sistema configurado y listo para pruebas
+
+DESPUÉS DEL REINICIO:
+
+1. VERIFICACIÓN AUTOMÁTICA:
+   - El sistema debería iniciarse automáticamente al encender Windows
+   - Se abrirá una nueva ventana de consola con logs del sistema
+   - El navegador debería abrirse automáticamente en http://localhost:8000/docs
+
+2. SI EL SISTEMA NO INICIA AUTOMÁTICAMENTE:
+   
+   Opción A - Diagnóstico rápido:
+   - Abrir PowerShell o CMD
+   - Navegar a: cd C:\InventarioBarras
+   - Ejecutar: python start_basic.py --diagnostic
+   
+   Opción B - Inicio manual:
+   - Doble clic en: C:\InventarioBarras\start_pos_system.bat
+   - O ejecutar: python C:\InventarioBarras\start_basic.py
+
+3. VERIFICAR QUE FUNCIONA:
+   - ✅ Ventana de consola con logs del sistema
+   - ✅ API disponible en: http://localhost:8000/health
+   - ✅ Documentación en: http://localhost:8000/docs
+   - ✅ Sin errores en los logs
+
+4. INFORMACIÓN DEL SISTEMA:
+   - API Backend: http://localhost:8000
+   - Health Check: http://localhost:8000/health  
+   - Documentación: http://localhost:8000/docs
+   - Credenciales: admin / admin123
+
+5. ARCHIVOS DE AYUDA:
+   - Estado completo: PROJECT_STATUS.md
+   - Logs del sistema: start_basic.log
+   - Script de emergencia: start_pos_system.bat
+
+6. SI HAY PROBLEMAS:
+   - Revisar start_basic.log para errores
+   - Ejecutar diagnóstico: python start_basic.py --diagnostic
+   - Verificar que Python esté en PATH
+   - Verificar puerto 8000 libre: netstat -ano | findstr :8000
+
+============================================================
+
+CONFIGURACIÓN APLICADA:
+- ✅ Puerto corregido: 8000 (era 8001)  
+- ✅ Script robusto: start_basic.py
+- ✅ Inicio automático configurado en registro Windows
+- ✅ Archivo batch de respaldo creado
+- ✅ Logs y diagnóstico funcionando
+
+COMANDO DE REINICIO:
+shutdown /r /t 0
+
+============================================================

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>POS - Punto de Venta v2</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -117,50 +118,65 @@
         .product-item {
             display: flex;
             align-items: center;
-            padding: 1rem 1.5rem;
+            justify-content: space-between;
+            padding: 1.2rem 1.5rem;
             border-bottom: 1px solid #e9ecef;
-            transition: background-color 0.2s;
+            transition: all 0.2s ease;
+            min-height: 80px;
         }
 
         .product-item:hover {
             background: var(--pos-light);
+            transform: translateX(3px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
         .product-icon {
-            width: 50px;
-            height: 50px;
-            background: var(--pos-primary);
+            width: 55px;
+            height: 55px;
+            background: linear-gradient(135deg, var(--pos-primary) 0%, var(--pos-secondary) 100%);
             color: white;
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            margin-right: 1rem;
+            font-size: 1.6rem;
+            margin-right: 0;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
         .product-info {
             flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            margin-left: 1rem;
         }
 
         .product-name {
             font-weight: 600;
-            font-size: 1.1rem;
-            margin: 0 0 0.25rem 0;
+            font-size: 1.15rem;
+            margin: 0 0 0.3rem 0;
+            line-height: 1.2;
         }
 
         .product-code {
             color: var(--pos-secondary);
             font-size: 0.9rem;
             font-family: 'Courier New', monospace;
+            opacity: 0.8;
         }
 
         .product-price {
-            font-size: 1.25rem;
+            font-size: 1.35rem;
             font-weight: 700;
             color: var(--pos-success);
             text-align: right;
-            min-width: 100px;
+            min-width: 110px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
         }
 
         /* Panel de acciones - DISTRIBUCIÓN AJUSTADA */
@@ -180,13 +196,21 @@
             box-shadow: var(--pos-card-shadow);
             padding: 1.5rem;
             flex-shrink: 0;
-            flex-basis: 35%;
-            max-height: 160px;
+            flex-basis: 45%;
+            max-height: 180px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            gap: 1rem;
+            justify-content: flex-start;
+            position: relative;
+        }
+
+        .input-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            margin-bottom: auto;
         }
 
         .input-group {
@@ -222,7 +246,7 @@
             outline: none;
         }
 
-        /* Controles de cantidad - CENTRADO SIMPLE Y PERFECTO */
+        /* Controles de cantidad - POSICIONADOS AL FONDO */
         .quantity-controls {
             display: flex;
             align-items: center;
@@ -231,6 +255,10 @@
             width: 100%;
             margin: 0;
             padding: 0;
+            position: absolute;
+            bottom: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
         }
 
         .qty-btn {
@@ -278,17 +306,21 @@
             border: 2px solid #e9ecef;
             border-radius: var(--pos-border-radius);
             box-shadow: var(--pos-card-shadow);
-            padding: 1.75rem;
+            padding: 1.5rem;
             text-align: center;
-            flex-grow: 1.15;
+            flex-grow: 1;
             min-height: 110px;
-            flex-basis: 25%;
+            flex-basis: 15%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
         .total-label {
-            font-size: 1.1rem;
+            font-size: 0.95rem;
             font-weight: 600;
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.5rem;
             color: var(--pos-secondary);
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -304,9 +336,9 @@
         }
 
         .total-items {
-            font-size: 1rem;
+            font-size: 0.85rem;
             color: var(--pos-secondary);
-            margin-top: 0.75rem;
+            margin-top: 0.5rem;
             font-weight: 500;
         }
 
@@ -510,28 +542,30 @@
 
                 <!-- Input de código - ABAJO CON CONTROLES -->
                 <div class="input-card">
-                    <div class="input-group">
-                        <label for="product-code">
-                            <i class="fas fa-barcode me-2"></i>Código del Producto
-                        </label>
-                        <input 
-                            type="text" 
-                            id="product-code" 
-                            class="product-input" 
-                            placeholder="Escanea o escribe el código..."
-                            autocomplete="off"
-                        >
-                        
-                        <!-- Controles de cantidad -->
-                        <div class="quantity-controls">
-                            <button type="button" class="qty-btn" onclick="decreaseQty()">
-                                <i class="fas fa-minus"></i>
-                            </button>
-                            <div class="qty-display" id="quantity-display">1</div>
-                            <button type="button" class="qty-btn" onclick="increaseQty()">
-                                <i class="fas fa-plus"></i>
-                            </button>
+                    <div class="input-area">
+                        <div class="input-group">
+                            <label for="product-code">
+                                <i class="fas fa-barcode me-2"></i>Código del Producto
+                            </label>
+                            <input 
+                                type="text" 
+                                id="product-code" 
+                                class="product-input" 
+                                placeholder="Escanea o escribe el código..."
+                                autocomplete="off"
+                            >
                         </div>
+                    </div>
+                    
+                    <!-- Controles de cantidad - AL FONDO -->
+                    <div class="quantity-controls">
+                        <button type="button" class="qty-btn" onclick="decreaseQty()">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <div class="qty-display" id="quantity-display">1</div>
+                        <button type="button" class="qty-btn" onclick="increaseQty()">
+                            <i class="fas fa-plus"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -587,7 +621,21 @@
                 if (e.key === 'Enter') {
                     addProductFromInput();
                 }
+                // Atajo F11 para pantalla completa
+                if (e.key === 'F11') {
+                    e.preventDefault();
+                    toggleFullscreen();
+                }
             });
+            
+            // Detectar si viene de lanzador automático
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('fullscreen') === 'auto') {
+                // Esperar 2 segundos y activar pantalla completa
+                setTimeout(() => {
+                    requestFullscreen();
+                }, 2000);
+            }
             
             // Focus automático
             productInput.focus();
@@ -746,6 +794,54 @@
         function showConfig() {
             alert('Configuración del sistema');
         }
+        
+        // Funciones de pantalla completa
+        function requestFullscreen() {
+            const element = document.documentElement;
+            
+            if (element.requestFullscreen) {
+                element.requestFullscreen();
+            } else if (element.webkitRequestFullscreen) {
+                element.webkitRequestFullscreen();
+            } else if (element.mozRequestFullScreen) {
+                element.mozRequestFullScreen();
+            } else if (element.msRequestFullscreen) {
+                element.msRequestFullscreen();
+            }
+            
+            console.log('📺 Pantalla completa activada desde JavaScript');
+        }
+        
+        function exitFullscreen() {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+        }
+        
+        function toggleFullscreen() {
+            if (!document.fullscreenElement && 
+                !document.webkitFullscreenElement && 
+                !document.mozFullScreenElement && 
+                !document.msFullscreenElement) {
+                requestFullscreen();
+            } else {
+                exitFullscreen();
+            }
+        }
+        
+        // Atajo de teclado global para F11
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F11') {
+                e.preventDefault();
+                toggleFullscreen();
+            }
+        });
         
         // Sistema de alertas
         function showAlert(type, message) {
