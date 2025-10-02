@@ -163,31 +163,47 @@
             min-width: 100px;
         }
 
-        /* Panel de acciones */
+        /* Panel de acciones - DISTRIBUCIÓN AJUSTADA */
         .actions-section {
             flex: 1;
             display: flex;
             flex-direction: column;
             gap: 1rem;
+            justify-content: flex-start;
         }
 
-        /* Input section */
+        /* Input section - FONDO GRIS CON CENTRADO PERFECTO */
         .input-card {
-            background: white;
+            background: #e9ecef;
+            border: 1px solid #d1d3d4;
             border-radius: var(--pos-border-radius);
             box-shadow: var(--pos-card-shadow);
             padding: 1.5rem;
+            flex-shrink: 0;
+            flex-basis: 35%;
+            max-height: 160px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
         }
 
         .input-group {
-            margin-bottom: 1.5rem;
+            margin: 0;
+            width: 100%;
+            text-align: center;
         }
 
         .input-group label {
             font-weight: 600;
             color: var(--pos-dark);
-            margin-bottom: 0.5rem;
-            display: block;
+            margin: 0 0 0.5rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
         }
 
         .product-input {
@@ -206,34 +222,92 @@
             outline: none;
         }
 
-        /* Total section */
-        .total-card {
-            background: linear-gradient(135deg, var(--pos-success) 0%, #20c997 100%);
+        /* Controles de cantidad - CENTRADO SIMPLE Y PERFECTO */
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .qty-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid var(--pos-primary);
+            background: white;
+            color: var(--pos-primary);
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qty-btn:hover {
+            background: var(--pos-primary);
             color: white;
+            transform: scale(1.05);
+        }
+
+        .qty-btn:active {
+            transform: scale(0.95);
+        }
+
+        .qty-display {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--pos-primary);
+            min-width: 40px;
+            text-align: center;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            padding: 0.3rem 0.6rem;
+        }
+
+        /* Total section - FONDO BLANCO Y REDUCIDO 10% */
+        .total-card {
+            background: white;
+            color: var(--pos-dark);
+            border: 2px solid #e9ecef;
             border-radius: var(--pos-border-radius);
             box-shadow: var(--pos-card-shadow);
-            padding: 1.5rem;
+            padding: 1.75rem;
             text-align: center;
+            flex-grow: 1.15;
+            min-height: 110px;
+            flex-basis: 25%;
         }
 
         .total-label {
-            font-size: 1rem;
+            font-size: 1.1rem;
             font-weight: 600;
-            margin-bottom: 0.5rem;
-            opacity: 0.9;
+            margin-bottom: 0.75rem;
+            color: var(--pos-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .total-amount {
-            font-size: 2.5rem;
+            font-size: 2.8rem;
             font-weight: 800;
-            margin: 0;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            margin: 0.5rem 0;
+            color: var(--pos-success);
+            text-shadow: none;
+            line-height: 1;
         }
 
         .total-items {
-            font-size: 0.9rem;
-            opacity: 0.8;
-            margin-top: 0.5rem;
+            font-size: 1rem;
+            color: var(--pos-secondary);
+            margin-top: 0.75rem;
+            font-weight: 500;
         }
 
         /* Action Buttons - DISEÑO V2 */
@@ -272,54 +346,44 @@
             transform: none !important;
         }
 
-        /* Botón PAGAR - Principal */
+        /* Botón PAGAR - Verde WhatsApp */
         .btn-pay {
             height: 4rem;
             font-size: 1.5rem;
-            background: linear-gradient(135deg, var(--pos-accent) 0%, #20c997 100%);
+            background: linear-gradient(135deg, #25d366 0%, #20b358 100%);
             color: white;
+            border: none;
         }
 
         .btn-pay:hover {
-            background: linear-gradient(135deg, #218838 0%, #17a2b8 100%);
-        }
-
-        /* Botón Cancelar Último - Secundario */
-        .btn-cancel-last {
-            height: auto;
-            padding: 1rem;
-            background: #6c757d;
+            background: linear-gradient(135deg, #20b358 0%, #1a9647 100%);
             color: white;
-            flex-direction: column;
         }
 
-        .btn-cancel-last:hover {
-            background: #5a6268;
-        }
-
-        .cancel-main-text {
+        /* Botón Borrar Último - Azul, izquierda */
+        .btn-delete-last {
+            height: 3rem;
             font-size: 1rem;
-            font-weight: 600;
-        }
-
-        .cancel-sub-text {
-            font-size: 0.75rem;
-            opacity: 0.7;
-            font-family: 'Courier New', monospace;
-            margin-top: 0.25rem;
-        }
-
-        /* Botón Limpiar Todo - Destructivo */
-        .btn-clear {
-            height: 4rem;
-            font-size: 1.25rem;
-            background: linear-gradient(135deg, var(--pos-danger) 0%, #e74c3c 100%);
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
             color: white;
-            margin-top: auto;
+            flex: 1;
+        }
+
+        .btn-delete-last:hover {
+            background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+        }
+
+        /* Botón Limpiar - Rosa, derecha */
+        .btn-clear {
+            height: 3rem;
+            font-size: 1rem;
+            background: linear-gradient(135deg, #e83e8c 0%, #c73676 100%);
+            color: white;
+            flex: 1;
         }
 
         .btn-clear:hover {
-            background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+            background: linear-gradient(135deg, #c73676 0%, #a02952 100%);
         }
 
         /* Estado vacío */
@@ -437,7 +501,14 @@
 
             <!-- Panel de acciones -->
             <div class="actions-section">
-                <!-- Input de código -->
+                <!-- Total - ARRIBA DEL TODO -->
+                <div class="total-card">
+                    <div class="total-label">TOTAL A PAGAR</div>
+                    <div class="total-amount" id="total-amount">$0.00</div>
+                    <div class="total-items" id="total-items">0 productos</div>
+                </div>
+
+                <!-- Input de código - ABAJO CON CONTROLES -->
                 <div class="input-card">
                     <div class="input-group">
                         <label for="product-code">
@@ -450,35 +521,40 @@
                             placeholder="Escanea o escribe el código..."
                             autocomplete="off"
                         >
+                        
+                        <!-- Controles de cantidad -->
+                        <div class="quantity-controls">
+                            <button type="button" class="qty-btn" onclick="decreaseQty()">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <div class="qty-display" id="quantity-display">1</div>
+                            <button type="button" class="qty-btn" onclick="increaseQty()">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Total -->
-                <div class="total-card">
-                    <div class="total-label">TOTAL A PAGAR</div>
-                    <div class="total-amount" id="total-amount">$0.00</div>
-                    <div class="total-items" id="total-items">0 productos</div>
-                </div>
-
-                <!-- Action Buttons V2 -->
+                <!-- Action Buttons V2 - DISPOSICIÓN CORREGIDA -->
                 <div class="action-buttons">
-                    <!-- Botón PAGAR -->
+                    <!-- Botón PAGAR - Principal -->
                     <button id="btn-pay" class="btn-pos btn-pay" onclick="processPay()" disabled>
                         <i class="fas fa-credit-card"></i>
                         PAGAR
                     </button>
 
-                    <!-- Botón Cancelar Último Producto -->
-                    <button id="btn-cancel-last" class="btn-pos btn-cancel-last" onclick="cancelLastProduct()" disabled>
-                        <div class="cancel-main-text">Cancelar Último Producto</div>
-                        <div class="cancel-sub-text" id="last-product-code">-</div>
-                    </button>
-
-                    <!-- Botón Limpiar Todo -->
-                    <button id="btn-clear" class="btn-pos btn-clear" onclick="clearAll()">
-                        <i class="fas fa-trash"></i>
-                        LIMPIAR TODO
-                    </button>
+                    <!-- Fila horizontal con 2 botones -->
+                    <div class="d-flex gap-2">
+                        <!-- Botón Borrar Último - Azul, izquierda -->
+                        <button id="btn-delete-last" class="btn-pos btn-delete-last" onclick="deleteLastItem()" disabled>
+                            <i class="fas fa-times me-2"></i>Borrar Último
+                        </button>
+                        
+                        <!-- Botón Limpiar - Rosa, derecha -->
+                        <button id="btn-clear" class="btn-pos btn-clear" onclick="clearAll()">
+                            <i class="fas fa-trash me-2"></i>Limpiar
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -492,6 +568,7 @@
         // Variables globales
         let cart = [];
         let lastProduct = undefined;
+        let currentQuantity = 1;
         
         // Inicialización
         document.addEventListener('DOMContentLoaded', function() {
@@ -529,19 +606,34 @@
             const producto = {
                 id: codigo,
                 name: `Producto ${codigo}`,
-                price: (Math.random() * 100 + 10).toFixed(2)
+                price: (Math.random() * 100 + 10).toFixed(2),
+                quantity: currentQuantity
             };
             
-            addProductToCart(producto);
+            addProductToCart(producto, currentQuantity);
             input.value = '';
             input.focus();
         }
         
-        function addProductToCart(producto) {
-            cart.push(producto);
+        function addProductToCart(producto, quantity = 1) {
+            // Verificar si ya existe en el carrito
+            const existingIndex = cart.findIndex(item => item.id === producto.id);
+            
+            if (existingIndex >= 0) {
+                // Actualizar cantidad del producto existente
+                cart[existingIndex].quantity += quantity;
+                cart[existingIndex].total = cart[existingIndex].price * cart[existingIndex].quantity;
+                showAlert('info', `${producto.name} cantidad actualizada: ${cart[existingIndex].quantity}`);
+            } else {
+                // Agregar nuevo producto con cantidad
+                producto.quantity = quantity;
+                producto.total = parseFloat(producto.price) * quantity;
+                cart.push(producto);
+                showAlert('success', `${producto.name} agregado (x${quantity})`);
+            }
+            
             lastProduct = producto;
             updateDisplay();
-            showAlert('success', `${producto.name} agregado`);
         }
         
         function updateDisplay() {
@@ -571,9 +663,9 @@
                     </div>
                     <div class="product-info">
                         <div class="product-name">${producto.name}</div>
-                        <div class="product-code">${producto.id}</div>
+                        <div class="product-code">${producto.id} (x${producto.quantity || 1})</div>
                     </div>
-                    <div class="product-price">$${producto.price}</div>
+                    <div class="product-price">$${(producto.total || producto.price).toFixed(2)}</div>
                 </div>
             `).join('');
             
@@ -582,45 +674,40 @@
         }
         
         function updateTotals() {
-            const total = cart.reduce((sum, producto) => sum + parseFloat(producto.price), 0);
+            const total = cart.reduce((sum, producto) => sum + (producto.total || parseFloat(producto.price)), 0);
+            const totalItems = cart.reduce((sum, producto) => sum + (producto.quantity || 1), 0);
             document.getElementById('total-amount').textContent = `$${total.toFixed(2)}`;
-            document.getElementById('total-items').textContent = `${cart.length} producto${cart.length !== 1 ? 's' : ''}`;
+            document.getElementById('total-items').textContent = `${totalItems} producto${totalItems !== 1 ? 's' : ''}`;
         }
         
         function updateButtons() {
             const payBtn = document.getElementById('btn-pay');
-            const cancelBtn = document.getElementById('btn-cancel-last');
-            const lastProductCode = document.getElementById('last-product-code');
+            const deleteBtn = document.getElementById('btn-delete-last');
             
             payBtn.disabled = cart.length === 0;
-            cancelBtn.disabled = cart.length === 0;
-            
-            if (lastProduct) {
-                lastProductCode.textContent = lastProduct.id;
-            } else {
-                lastProductCode.textContent = '-';
-            }
+            if (deleteBtn) deleteBtn.disabled = cart.length === 0;
         }
         
         // Funciones de botones
         function processPay() {
             if (cart.length === 0) return;
             
-            const total = cart.reduce((sum, producto) => sum + parseFloat(producto.price), 0);
-            showAlert('success', `💳 Pago procesado: $${total.toFixed(2)}`);
+            const total = cart.reduce((sum, producto) => sum + (producto.total || parseFloat(producto.price)), 0);
+            const totalItems = cart.reduce((sum, producto) => sum + (producto.quantity || 1), 0);
+            showAlert('success', `💳 Pago procesado: $${total.toFixed(2)} (${totalItems} items)`);
             
             setTimeout(() => {
                 clearAll(false);
             }, 2000);
         }
         
-        function cancelLastProduct() {
+        function deleteLastItem() {
             if (cart.length === 0) return;
             
             const removedProduct = cart.pop();
             lastProduct = cart.length > 0 ? cart[cart.length - 1] : undefined;
             updateDisplay();
-            showAlert('info', `${removedProduct.name} cancelado`);
+            showAlert('primary', `${removedProduct.name} eliminado`);
         }
         
         function clearAll(confirm = true) {
@@ -632,10 +719,27 @@
             
             cart = [];
             lastProduct = undefined;
+            currentQuantity = 1;
+            document.getElementById('quantity-display').textContent = '1';
             updateDisplay();
             
             if (confirm) {
                 showAlert('info', 'Venta limpiada');
+            }
+        }
+        
+        // Controles de cantidad
+        function increaseQty() {
+            if (currentQuantity < 99) {
+                currentQuantity++;
+                document.getElementById('quantity-display').textContent = currentQuantity;
+            }
+        }
+        
+        function decreaseQty() {
+            if (currentQuantity > 1) {
+                currentQuantity--;
+                document.getElementById('quantity-display').textContent = currentQuantity;
             }
         }
         
