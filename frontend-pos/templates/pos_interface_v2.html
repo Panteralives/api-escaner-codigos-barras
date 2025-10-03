@@ -21,844 +21,312 @@
             --pos-border-radius: 12px;
             --pos-card-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: var(--pos-bg);
             height: 100vh;
             overflow: hidden;
         }
-
-        /* Layout principal */
-        .pos-container {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            background: var(--pos-bg);
-        }
-
-        /* Header fusionado */
-        .pos-header {
-            background: linear-gradient(135deg, var(--pos-primary) 0%, var(--pos-secondary) 100%);
-            color: white;
-            padding: 1rem 1.5rem;
-            box-shadow: var(--pos-card-shadow);
-            z-index: 100;
-        }
-
-        .pos-header h1 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin: 0;
-        }
-
-        .scanner-status {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.9rem;
-        }
-
-        .status-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #28a745;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-
-        /* Contenido principal */
-        .pos-main {
-            flex: 1;
-            display: flex;
-            padding: 1rem;
-            gap: 1rem;
-            overflow: hidden;
-        }
-
-        /* Lista de productos - MÁS ESPACIO */
-        .products-section {
-            flex: 2;
-            background: white;
-            border-radius: var(--pos-border-radius);
-            box-shadow: var(--pos-card-shadow);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .products-header {
-            background: linear-gradient(135deg, var(--pos-primary) 0%, var(--pos-secondary) 100%);
-            color: white;
-            padding: 1rem;
-            border-radius: var(--pos-border-radius) var(--pos-border-radius) 0 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .products-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 0;
-        }
-
-        .product-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1.2rem 1.5rem;
-            border-bottom: 1px solid #e9ecef;
-            transition: all 0.2s ease;
-            min-height: 80px;
-        }
-
-        .product-item:hover {
-            background: var(--pos-light);
-            transform: translateX(3px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .product-icon {
-            width: 55px;
-            height: 55px;
-            background: linear-gradient(135deg, var(--pos-primary) 0%, var(--pos-secondary) 100%);
-            color: white;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.6rem;
-            margin-right: 0;
-            flex-shrink: 0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .product-info {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            margin-left: 1rem;
-        }
-
-        .product-name {
-            font-weight: 600;
-            font-size: 1.15rem;
-            margin: 0 0 0.3rem 0;
-            line-height: 1.2;
-        }
-
-        .product-code {
-            color: var(--pos-secondary);
-            font-size: 0.9rem;
-            font-family: 'Courier New', monospace;
-            opacity: 0.8;
-        }
-
-        .product-price {
-            font-size: 1.35rem;
-            font-weight: 700;
-            color: var(--pos-success);
-            text-align: right;
-            min-width: 110px;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-        }
-
-        /* Panel de acciones - DISTRIBUCIÓN AJUSTADA */
-        .actions-section {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            justify-content: flex-start;
-        }
-
-        /* Input section - FONDO GRIS CON CENTRADO PERFECTO */
-        .input-card {
-            background: #e9ecef;
-            border: 1px solid #d1d3d4;
-            border-radius: var(--pos-border-radius);
-            box-shadow: var(--pos-card-shadow);
-            padding: 1.5rem;
-            flex-shrink: 0;
-            flex-basis: 45%;
-            max-height: 180px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            position: relative;
-        }
-
-        .input-area {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-            margin-bottom: auto;
-        }
-
-        .input-group {
-            margin: 0;
-            width: 100%;
-            text-align: center;
-        }
-
-        .input-group label {
-            font-weight: 600;
-            color: var(--pos-dark);
-            margin: 0 0 0.5rem 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            width: 100%;
-        }
-
-        .product-input {
-            font-size: 1.1rem;
-            height: 3rem;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            padding: 0 1rem;
-            width: 100%;
-            transition: all 0.2s;
-        }
-
-        .product-input:focus {
-            border-color: var(--pos-primary);
-            box-shadow: 0 0 0 0.2rem rgba(44, 82, 130, 0.25);
-            outline: none;
-        }
-
-        /* Controles de cantidad - POSICIONADOS AL FONDO */
-        .quantity-controls {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-            width: 100%;
-            margin: 0;
-            padding: 0;
-            position: absolute;
-            bottom: 1.5rem;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        .qty-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            border: 2px solid var(--pos-primary);
-            background: white;
-            color: var(--pos-primary);
-            font-size: 0.9rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .qty-btn:hover {
-            background: var(--pos-primary);
-            color: white;
-            transform: scale(1.05);
-        }
-
-        .qty-btn:active {
-            transform: scale(0.95);
-        }
-
-        .qty-display {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--pos-primary);
-            min-width: 40px;
-            text-align: center;
-            background: white;
-            border: 2px solid #e9ecef;
-            border-radius: 6px;
-            padding: 0.3rem 0.6rem;
-        }
-
-        /* Total section - FONDO BLANCO Y REDUCIDO 10% */
-        .total-card {
-            background: white;
-            color: var(--pos-dark);
-            border: 2px solid #e9ecef;
-            border-radius: var(--pos-border-radius);
-            box-shadow: var(--pos-card-shadow);
-            padding: 1.5rem;
-            text-align: center;
-            flex-grow: 1;
-            min-height: 110px;
-            flex-basis: 15%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .total-label {
-            font-size: 0.95rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: var(--pos-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .total-amount {
-            font-size: 2.8rem;
-            font-weight: 800;
-            margin: 0.5rem 0;
-            color: var(--pos-success);
-            text-shadow: none;
-            line-height: 1;
-        }
-
-        .total-items {
-            font-size: 0.85rem;
-            color: var(--pos-secondary);
-            margin-top: 0.5rem;
-            font-weight: 500;
-        }
-
-        /* Action Buttons - DISEÑO V2 */
-        .action-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            margin-top: auto;
-        }
-
-        .btn-pos {
-            border: none;
-            border-radius: var(--pos-border-radius);
-            font-weight: 600;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-
-        .btn-pos:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-        }
-
-        .btn-pos:active {
-            transform: translateY(0);
-        }
-
-        .btn-pos:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-
-        /* Botón PAGAR - Verde WhatsApp */
-        .btn-pay {
-            height: 4rem;
-            font-size: 1.5rem;
-            background: linear-gradient(135deg, #25d366 0%, #20b358 100%);
-            color: white;
-            border: none;
-        }
-
-        .btn-pay:hover {
-            background: linear-gradient(135deg, #20b358 0%, #1a9647 100%);
-            color: white;
-        }
-
-        /* Botón Borrar Último - Azul, izquierda */
-        .btn-delete-last {
-            height: 3rem;
-            font-size: 1rem;
-            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-            color: white;
-            flex: 1;
-        }
-
-        .btn-delete-last:hover {
-            background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
-        }
-
-        /* Botón Limpiar - Rosa, derecha */
-        .btn-clear {
-            height: 3rem;
-            font-size: 1rem;
-            background: linear-gradient(135deg, #e83e8c 0%, #c73676 100%);
-            color: white;
-            flex: 1;
-        }
-
-        .btn-clear:hover {
-            background: linear-gradient(135deg, #c73676 0%, #a02952 100%);
-        }
-
-        /* Estado vacío */
-        .empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            color: var(--pos-secondary);
-            text-align: center;
-            padding: 2rem;
-        }
-
-        .empty-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            opacity: 0.3;
-        }
-
-        /* Animaciones */
-        .slide-in {
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .pos-main {
-                flex-direction: column;
-            }
-            
-            .products-section {
-                flex: 1;
-                min-height: 300px;
-            }
-            
-            .actions-section {
-                flex: none;
-            }
-            
-            .total-amount {
-                font-size: 2rem;
-            }
-        }
-
-        /* Alertas/Notificaciones */
-        .alert-pos {
-            position: fixed;
-            top: 100px;
-            right: 20px;
-            z-index: 1060;
-            max-width: 350px;
-            border-radius: var(--pos-border-radius);
-            box-shadow: var(--pos-card-shadow);
-        }
+        .pos-container { height: 100vh; display: flex; flex-direction: column; }
+        .pos-header { background: linear-gradient(135deg, var(--pos-primary) 0%, var(--pos-secondary) 100%); color: white; padding: 1rem 1.5rem; box-shadow: var(--pos-card-shadow); z-index: 100; }
+        .pos-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+        .pos-main { flex: 1; display: flex; padding: 1rem; gap: 1rem; overflow: hidden; }
+        .products-section { flex: 2; background: white; border-radius: var(--pos-border-radius); box-shadow: var(--pos-card-shadow); display: flex; flex-direction: column; overflow: hidden; }
+        .products-header { padding: 1rem; border-bottom: 1px solid #e9ecef; }
+        .products-list { flex: 1; overflow-y: auto; padding: 0; }
+        .product-item { display: flex; align-items: center; justify-content: space-between; padding: 1.2rem 1.5rem; border-bottom: 1px solid #e9ecef; transition: background-color 0.2s ease; }
+        .product-item:hover { background: var(--pos-light); }
+        .product-info .product-name { font-weight: 600; font-size: 1.1rem; }
+        .product-info .product-code { color: #6c757d; font-size: 0.9rem; }
+        .product-price { font-size: 1.25rem; font-weight: 700; color: var(--pos-success); text-align: right; }
+        .actions-section { flex: 1; display: flex; flex-direction: column; gap: 1rem; }
+        .total-card { background: white; border-radius: var(--pos-border-radius); box-shadow: var(--pos-card-shadow); padding: 1.5rem; text-align: center; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
+        .total-label { font-size: 1rem; font-weight: 600; color: var(--pos-secondary); text-transform: uppercase; }
+        .total-amount { font-size: 2.8rem; font-weight: 800; margin: 0.5rem 0; color: var(--pos-dark); }
+        .input-card { background: white; border-radius: var(--pos-border-radius); box-shadow: var(--pos-card-shadow); padding: 1.5rem; }
+        .product-input { height: 3rem; font-size: 1.1rem; }
+        .btn-pos { border: none; border-radius: var(--pos-border-radius); font-weight: 600; padding: 0.75rem 1.5rem; transition: all 0.2s ease; }
+        .btn-pay { background: var(--pos-accent); color: white; width: 100%; font-size: 1.5rem; padding: 1rem; }
+        .btn-pay:hover { background: #218838; }
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #6c757d; text-align: center; padding: 2rem; }
+        .empty-icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.3; }
+        .alert-pos { position: fixed; top: 100px; right: 20px; z-index: 1060; min-width: 300px; }
     </style>
 </head>
 <body>
     <div class="pos-container">
-        <!-- Header fusionado optimizado -->
         <div class="pos-header">
             <div class="d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-3">
-                    <i class="fas fa-cash-register fs-3"></i>
-                    <h1>Punto de Venta - Sistema de Escáner</h1>
-                </div>
-                <div class="d-flex align-items-center gap-3">
-                    <div class="scanner-status">
-                        <i class="fas fa-qrcode"></i>
-                        <div class="status-dot"></div>
-                        <span>Escaneando</span>
-                    </div>
-                    <button class="btn btn-outline-light btn-sm" onclick="showConfig()">
-                        <i class="fas fa-cog me-1"></i>Config
-                    </button>
-                </div>
+                <div class="d-flex align-items-center gap-3"><i class="fas fa-cash-register fs-3"></i><h1>Punto de Venta</h1></div>
+                <div id="api-status" class="badge bg-success">API Conectada</div>
             </div>
         </div>
 
-        <!-- Contenido principal -->
         <div class="pos-main">
-            <!-- Lista de productos escaneados - ESPACIO OPTIMIZADO -->
             <div class="products-section">
-                <div class="products-header">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="fas fa-shopping-cart"></i>
-                        <span class="fw-bold">Productos Escaneados</span>
-                    </div>
-                    <span id="items-count" class="badge bg-light text-dark">0 items</span>
+                <div class="products-header d-flex justify-content-between align-items-center">
+                    <span class="fw-bold fs-5">Carrito de Compras</span>
+                    <span id="items-count" class="badge bg-primary rounded-pill">0 items</span>
                 </div>
-                
                 <div class="products-list" id="products-list">
-                    <!-- Estado vacío -->
                     <div id="empty-state" class="empty-state">
                         <i class="fas fa-shopping-cart empty-icon"></i>
-                        <h4>Carrito Vacío</h4>
-                        <p>Escanea productos para agregarlos a la venta</p>
-                        <small class="text-muted">Usa el campo de código o scanner USB</small>
+                        <h4>El carrito está vacío</h4>
+                        <p>Escanea un producto para comenzar</p>
                     </div>
-                    
-                    <!-- Los productos aparecerán aquí dinámicamente -->
                 </div>
             </div>
 
-            <!-- Panel de acciones -->
             <div class="actions-section">
-                <!-- Total - ARRIBA DEL TODO -->
                 <div class="total-card">
-                    <div class="total-label">TOTAL A PAGAR</div>
+                    <div class="total-label">Total a Pagar</div>
                     <div class="total-amount" id="total-amount">$0.00</div>
                     <div class="total-items" id="total-items">0 productos</div>
                 </div>
 
-                <!-- Input de código - ABAJO CON CONTROLES -->
                 <div class="input-card">
-                    <div class="input-area">
-                        <div class="input-group">
-                            <label for="product-code">
-                                <i class="fas fa-barcode me-2"></i>Código del Producto
-                            </label>
-                            <input 
-                                type="text" 
-                                id="product-code" 
-                                class="product-input" 
-                                placeholder="Escanea o escribe el código..."
-                                autocomplete="off"
-                            >
-                        </div>
-                    </div>
-                    
-                    <!-- Controles de cantidad - AL FONDO -->
-                    <div class="quantity-controls">
-                        <button type="button" class="qty-btn" onclick="decreaseQty()">
-                            <i class="fas fa-minus"></i>
-                        </button>
-                        <div class="qty-display" id="quantity-display">1</div>
-                        <button type="button" class="qty-btn" onclick="increaseQty()">
-                            <i class="fas fa-plus"></i>
-                        </button>
+                    <label for="product-code" class="form-label fw-bold">Código del Producto</label>
+                    <input type="text" id="product-code" class="form-control product-input" placeholder="Escanear o escribir código...">
+                    <div class="d-flex align-items-center justify-content-center gap-3 mt-3">
+                        <button class="btn btn-secondary" onclick="decreaseQty()">-</button>
+                        <span id="quantity-display" class="fs-4 fw-bold">1</span>
+                        <button class="btn btn-secondary" onclick="increaseQty()">+</button>
                     </div>
                 </div>
 
-                <!-- Action Buttons V2 - DISPOSICIÓN CORREGIDA -->
-                <div class="action-buttons">
-                    <!-- Botón PAGAR - Principal -->
+                <div class="d-grid gap-2">
                     <button id="btn-pay" class="btn-pos btn-pay" onclick="processPay()" disabled>
-                        <i class="fas fa-credit-card"></i>
-                        PAGAR
+                        <i class="fas fa-credit-card me-2"></i>PAGAR
                     </button>
-
-                    <!-- Fila horizontal con 2 botones -->
                     <div class="d-flex gap-2">
-                        <!-- Botón Borrar Último - Azul, izquierda -->
-                        <button id="btn-delete-last" class="btn-pos btn-delete-last" onclick="deleteLastItem()" disabled>
-                            <i class="fas fa-times me-2"></i>Borrar Último
-                        </button>
-                        
-                        <!-- Botón Limpiar - Rosa, derecha -->
-                        <button id="btn-clear" class="btn-pos btn-clear" onclick="clearAll()">
-                            <i class="fas fa-trash me-2"></i>Limpiar
-                        </button>
+                        <button id="btn-delete-last" class="btn btn-warning w-100" onclick="deleteLastItem()" disabled>Borrar Último</button>
+                        <button id="btn-clear" class="btn btn-danger w-100" onclick="clearAll()">Limpiar Todo</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- POS JavaScript -->
     <script>
-        // Variables globales
+        // --- CONFIGURACIÓN Y ESTADO GLOBAL ---
+        const API_BASE_URL = 'http://127.0.0.1:8000';
         let cart = [];
-        let lastProduct = undefined;
         let currentQuantity = 1;
-        
-        // Inicialización
-        document.addEventListener('DOMContentLoaded', function() {
-            initializePOS();
+
+        // --- INICIALIZACIÓN ---
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Inicializando POS v2 - Modo Funcional...');
             setupEventListeners();
-        });
-        
-        function initializePOS() {
-            console.log('🚀 Inicializando POS v2...');
+            checkApiStatus();
             updateDisplay();
-        }
-        
+        });
+
         function setupEventListeners() {
             const productInput = document.getElementById('product-code');
-            productInput.addEventListener('keypress', function(e) {
+            productInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
+                    e.preventDefault();
                     addProductFromInput();
                 }
-                // Atajo F11 para pantalla completa
-                if (e.key === 'F11') {
-                    e.preventDefault();
-                    toggleFullscreen();
-                }
             });
-            
-            // Detectar si viene de lanzador automático
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('fullscreen') === 'auto') {
-                // Esperar 2 segundos y activar pantalla completa
-                setTimeout(() => {
-                    requestFullscreen();
-                }, 2000);
-            }
-            
-            // Focus automático
             productInput.focus();
         }
+
+        async function checkApiStatus() {
+            const statusBadge = document.getElementById('api-status');
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/v1/health`);
+                if (!response.ok) throw new Error('API no responde correctamente');
+                statusBadge.textContent = 'API Conectada';
+                statusBadge.className = 'badge bg-success';
+            } catch (error) {
+                console.error('API connection failed:', error);
+                statusBadge.textContent = 'API Desconectada';
+                statusBadge.className = 'badge bg-danger';
+            }
+        }
         
-        function addProductFromInput() {
+        // --- LÓGICA DE BÚSQUEDA Y CARRITO ---
+        async function addProductFromInput() {
             const input = document.getElementById('product-code');
             const codigo = input.value.trim();
-            
-            if (!codigo) {
-                showAlert('warning', 'Ingresa un código de producto');
+            if (!codigo) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/v1/productos/${codigo}`);
+                
+                if (response.status === 404) {
+                    showAlert('warning', `Producto con código "${codigo}" no encontrado.`);
+                    return;
+                }
+                if (!response.ok) {
+                    throw new Error(`Error del servidor: ${response.statusText}`);
+                }
+
+                const producto = await response.json();
+                addProductToCart(producto, currentQuantity);
+
+            } catch (error) {
+                console.error('Error al buscar producto:', error);
+                showAlert('danger', 'No se pudo conectar con el servidor para buscar el producto.');
+            } finally {
+                input.value = '';
+                input.focus();
+                resetQuantity();
+            }
+        }
+
+        function addProductToCart(producto, quantity) {
+            if (producto.stock < quantity) {
+                showAlert('danger', `Stock insuficiente para "${producto.nombre}". Disponible: ${producto.stock}`);
                 return;
             }
-            
-            // Simular producto (en producción conectaría con API)
-            const producto = {
-                id: codigo,
-                name: `Producto ${codigo}`,
-                price: (Math.random() * 100 + 10).toFixed(2),
-                quantity: currentQuantity
-            };
-            
-            addProductToCart(producto, currentQuantity);
-            input.value = '';
-            input.focus();
-        }
-        
-        function addProductToCart(producto, quantity = 1) {
-            // Verificar si ya existe en el carrito
-            const existingIndex = cart.findIndex(item => item.id === producto.id);
-            
-            if (existingIndex >= 0) {
-                // Actualizar cantidad del producto existente
-                cart[existingIndex].quantity += quantity;
-                cart[existingIndex].total = cart[existingIndex].price * cart[existingIndex].quantity;
-                showAlert('info', `${producto.name} cantidad actualizada: ${cart[existingIndex].quantity}`);
+
+            const existingIndex = cart.findIndex(item => item.codigo_barra === producto.codigo_barra);
+            if (existingIndex > -1) {
+                const newQuantity = cart[existingIndex].quantity + quantity;
+                if (producto.stock < newQuantity) {
+                    showAlert('warning', `Stock máximo alcanzado para "${producto.nombre}".`);
+                    return;
+                }
+                cart[existingIndex].quantity = newQuantity;
             } else {
-                // Agregar nuevo producto con cantidad
-                producto.quantity = quantity;
-                producto.total = parseFloat(producto.price) * quantity;
-                cart.push(producto);
-                showAlert('success', `${producto.name} agregado (x${quantity})`);
+                cart.push({ ...producto, quantity });
             }
             
-            lastProduct = producto;
+            showAlert('success', `${producto.nombre} (x${quantity}) agregado.`);
             updateDisplay();
         }
-        
+
+        // --- LÓGICA DE PAGO ---
+        async function processPay() {
+            if (cart.length === 0) return;
+
+            const totalAmount = cart.reduce((sum, item) => sum + (item.precio * item.quantity), 0);
+
+            const saleData = {
+                items: cart.map(item => ({
+                    codigo_barra: item.codigo_barra,
+                    quantity: item.quantity
+                })),
+                payment_method: "cash", // Simplificado por ahora
+                total_amount: totalAmount
+            };
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/v1/sales/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(saleData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Error al procesar la venta.');
+                }
+                
+                const result = await response.json();
+                showAlert('success', `Venta #${result.sale_number} completada por $${totalAmount.toFixed(2)}`);
+                
+                setTimeout(() => clearAll(false), 500);
+
+            } catch (error) {
+                console.error('Error en el pago:', error);
+                showAlert('danger', `Error en el pago: ${error.message}`);
+            }
+        }
+
+        // --- ACTUALIZACIÓN DE UI ---
         function updateDisplay() {
             updateProductsList();
             updateTotals();
             updateButtons();
         }
-        
+
         function updateProductsList() {
             const container = document.getElementById('products-list');
             const emptyState = document.getElementById('empty-state');
-            const itemsCount = document.getElementById('items-count');
-            
+            document.getElementById('items-count').textContent = `${cart.length} items`;
+
             if (cart.length === 0) {
+                container.innerHTML = '';
+                container.appendChild(emptyState);
                 emptyState.style.display = 'flex';
-                itemsCount.textContent = '0 items';
                 return;
             }
             
             emptyState.style.display = 'none';
-            itemsCount.textContent = `${cart.length} item${cart.length !== 1 ? 's' : ''}`;
-            
-            const html = cart.map((producto, index) => `
-                <div class="product-item slide-in" data-index="${index}">
-                    <div class="product-icon">
-                        <i class="fas fa-box"></i>
-                    </div>
+            container.innerHTML = cart.map((item, index) => {
+                const totalLinea = item.precio * item.quantity;
+                return `
+                <div class="product-item" data-index="${index}">
                     <div class="product-info">
-                        <div class="product-name">${producto.name}</div>
-                        <div class="product-code">${producto.id} (x${producto.quantity || 1})</div>
+                        <div class="product-name">${item.nombre}</div>
+                        <div class="product-code">${item.codigo_barra} | Cant: ${item.quantity}</div>
                     </div>
-                    <div class="product-price">$${(producto.total || producto.price).toFixed(2)}</div>
-                </div>
-            `).join('');
-            
-            container.innerHTML = html;
+                    <div class="product-price">$${totalLinea.toFixed(2)}</div>
+                </div>`;
+            }).join('');
             container.scrollTop = container.scrollHeight;
         }
-        
+
         function updateTotals() {
-            const total = cart.reduce((sum, producto) => sum + (producto.total || parseFloat(producto.price)), 0);
-            const totalItems = cart.reduce((sum, producto) => sum + (producto.quantity || 1), 0);
+            const total = cart.reduce((sum, item) => sum + (item.precio * item.quantity), 0);
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
             document.getElementById('total-amount').textContent = `$${total.toFixed(2)}`;
             document.getElementById('total-items').textContent = `${totalItems} producto${totalItems !== 1 ? 's' : ''}`;
         }
-        
+
         function updateButtons() {
-            const payBtn = document.getElementById('btn-pay');
-            const deleteBtn = document.getElementById('btn-delete-last');
-            
-            payBtn.disabled = cart.length === 0;
-            if (deleteBtn) deleteBtn.disabled = cart.length === 0;
+            const hasItems = cart.length > 0;
+            document.getElementById('btn-pay').disabled = !hasItems;
+            document.getElementById('btn-delete-last').disabled = !hasItems;
         }
-        
-        // Funciones de botones
-        function processPay() {
-            if (cart.length === 0) return;
-            
-            const total = cart.reduce((sum, producto) => sum + (producto.total || parseFloat(producto.price)), 0);
-            const totalItems = cart.reduce((sum, producto) => sum + (producto.quantity || 1), 0);
-            showAlert('success', `💳 Pago procesado: $${total.toFixed(2)} (${totalItems} items)`);
-            
-            setTimeout(() => {
-                clearAll(false);
-            }, 2000);
-        }
-        
+
+        // --- FUNCIONES DE BOTONES AUXILIARES ---
         function deleteLastItem() {
-            if (cart.length === 0) return;
-            
-            const removedProduct = cart.pop();
-            lastProduct = cart.length > 0 ? cart[cart.length - 1] : undefined;
+            if (cart.length > 0) {
+                const removed = cart.pop();
+                showAlert('info', `"${removed.nombre}" eliminado.`);
+                updateDisplay();
+            }
+        }
+
+        function clearAll(confirm = true) {
+            if (confirm && cart.length > 0 && !window.confirm('¿Está seguro de que desea limpiar todo el carrito?')) {
+                return;
+            }
+            cart = [];
             updateDisplay();
-            showAlert('primary', `${removedProduct.name} eliminado`);
+            if (confirm) showAlert('warning', 'Carrito limpiado.');
+        }
+
+        // --- CONTROLES DE CANTIDAD ---
+        function increaseQty() {
+            if (currentQuantity < 99) currentQuantity++;
+            document.getElementById('quantity-display').textContent = currentQuantity;
+        }
+
+        function decreaseQty() {
+            if (currentQuantity > 1) currentQuantity--;
+            document.getElementById('quantity-display').textContent = currentQuantity;
         }
         
-        function clearAll(confirm = true) {
-            if (confirm && cart.length > 0) {
-                if (!window.confirm('¿Limpiar toda la venta?')) {
-                    return;
-                }
-            }
-            
-            cart = [];
-            lastProduct = undefined;
+        function resetQuantity() {
             currentQuantity = 1;
             document.getElementById('quantity-display').textContent = '1';
-            updateDisplay();
-            
-            if (confirm) {
-                showAlert('info', 'Venta limpiada');
-            }
         }
         
-        // Controles de cantidad
-        function increaseQty() {
-            if (currentQuantity < 99) {
-                currentQuantity++;
-                document.getElementById('quantity-display').textContent = currentQuantity;
-            }
-        }
-        
-        function decreaseQty() {
-            if (currentQuantity > 1) {
-                currentQuantity--;
-                document.getElementById('quantity-display').textContent = currentQuantity;
-            }
-        }
-        
-        function showConfig() {
-            alert('Configuración del sistema');
-        }
-        
-        // Funciones de pantalla completa
-        function requestFullscreen() {
-            const element = document.documentElement;
-            
-            if (element.requestFullscreen) {
-                element.requestFullscreen();
-            } else if (element.webkitRequestFullscreen) {
-                element.webkitRequestFullscreen();
-            } else if (element.mozRequestFullScreen) {
-                element.mozRequestFullScreen();
-            } else if (element.msRequestFullscreen) {
-                element.msRequestFullscreen();
-            }
-            
-            console.log('📺 Pantalla completa activada desde JavaScript');
-        }
-        
-        function exitFullscreen() {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            } else if (document.webkitExitFullscreen) {
-                document.webkitExitFullscreen();
-            } else if (document.mozCancelFullScreen) {
-                document.mozCancelFullScreen();
-            } else if (document.msExitFullscreen) {
-                document.msExitFullscreen();
-            }
-        }
-        
-        function toggleFullscreen() {
-            if (!document.fullscreenElement && 
-                !document.webkitFullscreenElement && 
-                !document.mozFullScreenElement && 
-                !document.msFullscreenElement) {
-                requestFullscreen();
-            } else {
-                exitFullscreen();
-            }
-        }
-        
-        // Atajo de teclado global para F11
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'F11') {
-                e.preventDefault();
-                toggleFullscreen();
-            }
-        });
-        
-        // Sistema de alertas
+        // --- UTILIDADES ---
         function showAlert(type, message) {
+            const alertContainer = document.body;
             const alertEl = document.createElement('div');
             alertEl.className = `alert alert-${type} alert-dismissible fade show alert-pos`;
-            alertEl.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-            
-            document.body.appendChild(alertEl);
-            
-            setTimeout(() => {
-                if (alertEl.parentNode) {
-                    alertEl.remove();
-                }
-            }, 3000);
+            alertEl.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+            alertContainer.appendChild(alertEl);
+            setTimeout(() => bootstrap.Alert.getOrCreateInstance(alertEl).close(), 4000);
         }
     </script>
 </body>
