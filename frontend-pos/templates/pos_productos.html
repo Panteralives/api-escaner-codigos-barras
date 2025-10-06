@@ -1,0 +1,642 @@
+{% extends "base.html" %}
+
+{% block title %}Productos - Escáner de Códigos{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-6">
+            <i class="fas fa-boxes me-3"></i>
+            Gestión de Productos
+        </h1>
+        <p class="lead text-muted">Administra el inventario de productos</p>
+    </div>
+</div>
+
+<!-- Tabs para gestión de productos -->
+<ul class="nav nav-tabs" id="productTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="list-tab" data-bs-toggle="tab" data-bs-target="#list" type="button" role="tab">
+            <i class="fas fa-list me-2"></i>Lista de Productos
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="add-tab" data-bs-toggle="tab" data-bs-target="#add" type="button" role="tab">
+            <i class="fas fa-plus me-2"></i>Agregar Producto
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="import-tab" data-bs-toggle="tab" data-bs-target="#import" type="button" role="tab">
+            <i class="fas fa-upload me-2"></i>Importar/Exportar
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content mt-4" id="productTabsContent">
+    <!-- Tab 1: Lista de productos -->
+    <div class="tab-pane fade show active" id="list" role="tabpanel">
+        <!-- Filtros y búsqueda -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-filter me-2"></i>Filtros y Búsqueda</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <label for="search-input" class="form-label">Buscar productos</label>
+                        <input type="text" class="form-control" id="search-input" placeholder="Nombre o código...">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="category-filter" class="form-label">Categoría</label>
+                        <select class="form-select" id="category-filter">
+                            <option value="">Todas las categorías</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="stock-filter" class="form-label">Stock</label>
+                        <select class="form-select" id="stock-filter">
+                            <option value="">Todos</option>
+                            <option value="low">Stock bajo (≤10)</option>
+                            <option value="zero">Sin stock</option>
+                            <option value="good">Stock normal (>10)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-outline-secondary me-2" onclick="clearFilters()">
+                            <i class="fas fa-times"></i> Limpiar
+                        </button>
+                        <button class="btn btn-primary" onclick="loadProducts()">
+                            <i class="fas fa-search"></i> Buscar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de productos -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-boxes me-2"></i>Productos Registrados</h5>
+                <div>
+                    <span id="product-count" class="badge bg-primary">0 productos</span>
+                    <button class="btn btn-sm btn-success ms-2" onclick="showAddForm()">
+                        <i class="fas fa-plus me-1"></i>Nuevo
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="products-loading" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando productos...</span>
+                    </div>
+                    <p class="mt-2">Cargando productos...</p>
+                </div>
+                
+                <div id="products-container" style="display: none;">
+                    <!-- Los productos se cargarán aquí dinámicamente -->
+                </div>
+                
+                <div id="no-products" class="text-center py-4" style="display: none;">
+                    <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No hay productos</h5>
+                    <p class="text-muted">Agrega tu primer producto para comenzar</p>
+                    <button class="btn btn-primary" onclick="showAddForm()">
+                        <i class="fas fa-plus me-2"></i>Agregar Primer Producto
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 2: Agregar producto -->
+    <div class="tab-pane fade" id="add" role="tabpanel">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-plus me-2"></i>Agregar Nuevo Producto</h5>
+            </div>
+            <div class="card-body">
+                <form id="add-product-form">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="codigo-barra" class="form-label">
+                                    <i class="fas fa-barcode me-1"></i>Código de Barras *
+                                </label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="codigo-barra" name="codigo_barra" required>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="scanForCode()">
+                                        <i class="fas fa-camera"></i> Escanear
+                                    </button>
+                                </div>
+                                <div class="form-text">Ejemplo: 7501000673209</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="nombre" class="form-label">
+                                    <i class="fas fa-tag me-1"></i>Nombre del Producto *
+                                </label>
+                                <input type="text" class="form-control" id="nombre" name="nombre" required>
+                                <div class="form-text">Ejemplo: Coca Cola 600ml</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="precio" class="form-label">
+                                    <i class="fas fa-dollar-sign me-1"></i>Precio *
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="precio" name="precio" step="0.01" min="0" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="categoria" class="form-label">
+                                    <i class="fas fa-folder me-1"></i>Categoría
+                                </label>
+                                <input type="text" class="form-control" id="categoria" name="categoria" list="categories-list">
+                                <datalist id="categories-list">
+                                    <!-- Se llenarán dinámicamente -->
+                                </datalist>
+                                <div class="form-text">Ejemplo: Bebidas, Snacks, etc.</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="stock" class="form-label">
+                                    <i class="fas fa-cubes me-1"></i>Stock Inicial
+                                </label>
+                                <input type="number" class="form-control" id="stock" name="stock" min="0" value="0">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="descripcion" class="form-label">
+                                    <i class="fas fa-info-circle me-1"></i>Descripción
+                                </label>
+                                <textarea class="form-control" id="descripcion" name="descripcion" rows="3"></textarea>
+                                <div class="form-text">Descripción opcional del producto</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between">
+                                <button type="button" class="btn btn-outline-secondary" onclick="clearForm()">
+                                    <i class="fas fa-times me-2"></i>Limpiar Formulario
+                                </button>
+                                <div>
+                                    <button type="button" class="btn btn-outline-primary me-2" onclick="previewProduct()">
+                                        <i class="fas fa-eye me-2"></i>Vista Previa
+                                    </button>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-save me-2"></i>Guardar Producto
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Vista previa del producto -->
+        <div id="product-preview" class="card mt-4" style="display: none;">
+            <div class="card-header bg-info text-white">
+                <h6><i class="fas fa-eye me-2"></i>Vista Previa del Producto</h6>
+            </div>
+            <div class="card-body" id="preview-content">
+                <!-- Vista previa se generará aquí -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 3: Importar/Exportar -->
+    <div class="tab-pane fade" id="import" role="tabpanel">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-download me-2"></i>Exportar Productos</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Descarga todos los productos en formato CSV o JSON para respaldo o análisis.</p>
+                        
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-success" onclick="exportProducts('csv')">
+                                <i class="fas fa-file-csv me-2"></i>Descargar CSV
+                            </button>
+                            <button class="btn btn-info" onclick="exportProducts('json')">
+                                <i class="fas fa-file-code me-2"></i>Descargar JSON
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-upload me-2"></i>Importar Productos</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Sube un archivo CSV con productos para importar en lote.</p>
+                        
+                        <div class="alert alert-info">
+                            <small>
+                                <strong>Formato CSV esperado:</strong><br>
+                                codigo_barra,nombre,precio,categoria,stock,descripcion
+                            </small>
+                        </div>
+                        
+                        <form id="import-form" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <input type="file" class="form-control" id="import-file" accept=".csv" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-upload me-2"></i>Importar CSV
+                            </button>
+                        </form>
+                        
+                        <hr>
+                        
+                        <a href="#" onclick="downloadTemplate()" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-download me-1"></i>Descargar Plantilla CSV
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para editar producto -->
+<div class="modal fade" id="editProductModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Editar Producto
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-product-form">
+                    <input type="hidden" id="edit-id">
+                    <!-- Campos similares al formulario de agregar -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit-codigo-barra" class="form-label">Código de Barras</label>
+                                <input type="text" class="form-control" id="edit-codigo-barra" name="codigo_barra" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="edit-nombre" class="form-label">Nombre</label>
+                                <input type="text" class="form-control" id="edit-nombre" name="nombre" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="edit-precio" class="form-label">Precio</label>
+                                <input type="number" class="form-control" id="edit-precio" name="precio" step="0.01" min="0" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit-categoria" class="form-label">Categoría</label>
+                                <input type="text" class="form-control" id="edit-categoria" name="categoria">
+                            </div>
+                            <div class="mb-3">
+                                <label for="edit-stock" class="form-label">Stock</label>
+                                <input type="number" class="form-control" id="edit-stock" name="stock" min="0">
+                            </div>
+                            <div class="mb-3">
+                                <label for="edit-descripcion" class="form-label">Descripción</label>
+                                <textarea class="form-control" id="edit-descripcion" name="descripcion" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger me-2" onclick="deleteProduct()">
+                    <i class="fas fa-trash me-1"></i>Eliminar
+                </button>
+                <button type="button" class="btn btn-primary" onclick="updateProduct()">
+                    <i class="fas fa-save me-1"></i>Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Variables globales
+let allProducts = [];
+let currentEditingId = null;
+
+// Cargar datos al inicializar
+document.addEventListener('DOMContentLoaded', function() {
+    loadProducts();
+    setupForms();
+});
+
+// Cargar productos desde API
+async function loadProducts() {
+    const loadingDiv = document.getElementById('products-loading');
+    const containerDiv = document.getElementById('products-container');
+    const noProductsDiv = document.getElementById('no-products');
+    
+    loadingDiv.style.display = 'block';
+    containerDiv.style.display = 'none';
+    noProductsDiv.style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/productos');
+        if (!response.ok) throw new Error('Error cargando productos');
+        
+        allProducts = await response.json();
+        
+        loadingDiv.style.display = 'none';
+        
+        if (allProducts.length === 0) {
+            noProductsDiv.style.display = 'block';
+        } else {
+            displayProducts(allProducts);
+            containerDiv.style.display = 'block';
+            updateProductCount(allProducts.length);
+            populateCategoryFilters();
+        }
+        
+    } catch (error) {
+        console.error('Error:', error);
+        loadingDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <h6>Error cargando productos</h6>
+                <p>${error.message}</p>
+                <button class="btn btn-sm btn-primary" onclick="loadProducts()">Reintentar</button>
+            </div>
+        `;
+    }
+}
+
+// Mostrar productos en la interfaz
+function displayProducts(products) {
+    const container = document.getElementById('products-container');
+    
+    if (products.length === 0) {
+        container.innerHTML = '<div class="alert alert-info">No se encontraron productos con los filtros actuales</div>';
+        return;
+    }
+    
+    const productsHtml = products.map(producto => `
+        <div class="card mb-3 product-card" data-id="${producto.id}">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-2">
+                        <div class="text-center">
+                            <i class="fas fa-box fa-2x text-primary mb-2"></i>
+                            <br>
+                            <code class="small">${producto.codigo_barra}</code>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="card-title mb-1">${producto.nombre}</h6>
+                        <p class="card-text text-muted small mb-1">
+                            ${producto.categoria || 'Sin categoría'}
+                        </p>
+                        ${producto.descripcion ? `<p class="card-text small text-muted">${producto.descripcion}</p>` : ''}
+                    </div>
+                    <div class="col-md-2 text-center">
+                        <h5 class="text-success mb-0">$${producto.precio.toFixed(2)}</h5>
+                        <small class="text-muted">Precio</small>
+                    </div>
+                    <div class="col-md-2 text-center">
+                        <span class="badge fs-6 ${producto.stock > 10 ? 'bg-success' : producto.stock > 0 ? 'bg-warning' : 'bg-danger'}">
+                            ${producto.stock}
+                        </span>
+                        <br>
+                        <small class="text-muted">Stock</small>
+                    </div>
+                    <div class="col-md-2 text-end">
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-outline-primary" onclick="editProduct(${producto.id})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete(${producto.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    container.innerHTML = productsHtml;
+}
+
+// Configurar formularios
+function setupForms() {
+    // Formulario agregar producto
+    document.getElementById('add-product-form').addEventListener('submit', handleAddProduct);
+    
+    // Formulario importar
+    document.getElementById('import-form').addEventListener('submit', handleImport);
+    
+    // Filtros en tiempo real
+    document.getElementById('search-input').addEventListener('input', applyFilters);
+    document.getElementById('category-filter').addEventListener('change', applyFilters);
+    document.getElementById('stock-filter').addEventListener('change', applyFilters);
+}
+
+// Manejar envío del formulario de agregar producto
+async function handleAddProduct(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+    
+    // Convertir tipos
+    data.precio = parseFloat(data.precio);
+    data.stock = parseInt(data.stock) || 0;
+    
+    try {
+        const response = await fetch('/api/productos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            showAlert('success', 'Producto agregado correctamente');
+            clearForm();
+            loadProducts(); // Recargar lista
+            
+            // Cambiar a tab de lista
+            document.getElementById('list-tab').click();
+        } else {
+            let errorMessage = 'Error agregando producto';
+            try {
+                const errorData = await response.json();
+                console.log('Error from API:', errorData);
+                
+                if (errorData.detail) {
+                    // Si detail es un string
+                    if (typeof errorData.detail === 'string') {
+                        errorMessage = errorData.detail;
+                    }
+                    // Si detail es un objeto con message
+                    else if (errorData.detail.message) {
+                        errorMessage = errorData.detail.message;
+                    }
+                    // Si detail es un array de errores de validación
+                    else if (Array.isArray(errorData.detail)) {
+                        errorMessage = errorData.detail.map(err => err.msg || err.message || err).join(', ');
+                    }
+                    // Si detail es un objeto, convertir a string
+                    else {
+                        errorMessage = JSON.stringify(errorData.detail);
+                    }
+                }
+                // Si hay un message directo
+                else if (errorData.message) {
+                    errorMessage = errorData.message;
+                }
+                // Si hay un error directo
+                else if (errorData.error) {
+                    errorMessage = errorData.error;
+                }
+            } catch (parseError) {
+                console.error('Error parsing API response:', parseError);
+                errorMessage = `Error HTTP ${response.status}: ${response.statusText}`;
+            }
+            
+            showAlert('danger', errorMessage);
+        }
+        
+    } catch (error) {
+        showAlert('danger', 'Error de conexión: ' + error.message);
+    }
+}
+
+// Aplicar filtros
+function applyFilters() {
+    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    const categoryFilter = document.getElementById('category-filter').value;
+    const stockFilter = document.getElementById('stock-filter').value;
+    
+    let filteredProducts = allProducts.filter(producto => {
+        // Filtro de búsqueda
+        const matchesSearch = !searchTerm || 
+            producto.nombre.toLowerCase().includes(searchTerm) || 
+            producto.codigo_barra.includes(searchTerm);
+        
+        // Filtro de categoría
+        const matchesCategory = !categoryFilter || 
+            (producto.categoria || '').toLowerCase() === categoryFilter.toLowerCase();
+        
+        // Filtro de stock
+        let matchesStock = true;
+        if (stockFilter === 'low') matchesStock = producto.stock <= 10;
+        else if (stockFilter === 'zero') matchesStock = producto.stock === 0;
+        else if (stockFilter === 'good') matchesStock = producto.stock > 10;
+        
+        return matchesSearch && matchesCategory && matchesStock;
+    });
+    
+    displayProducts(filteredProducts);
+    updateProductCount(filteredProducts.length);
+}
+
+// Funciones auxiliares
+function updateProductCount(count) {
+    document.getElementById('product-count').textContent = `${count} producto${count !== 1 ? 's' : ''}`;
+}
+
+function populateCategoryFilters() {
+    const categories = [...new Set(allProducts.map(p => p.categoria).filter(c => c))];
+    const select = document.getElementById('category-filter');
+    
+    categories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        select.appendChild(option);
+    });
+}
+
+function clearForm() {
+    document.getElementById('add-product-form').reset();
+    document.getElementById('product-preview').style.display = 'none';
+}
+
+function clearFilters() {
+    document.getElementById('search-input').value = '';
+    document.getElementById('category-filter').value = '';
+    document.getElementById('stock-filter').value = '';
+    applyFilters();
+}
+
+function showAddForm() {
+    document.getElementById('add-tab').click();
+}
+
+function previewProduct() {
+    // Implementar vista previa
+    showAlert('info', 'Vista previa en desarrollo');
+}
+
+function scanForCode() {
+    // Redirigir a página de escaneo
+    window.location.href = '/scan';
+}
+
+function editProduct(id) {
+    // Implementar edición
+    showAlert('info', 'Edición en desarrollo');
+}
+
+function confirmDelete(id) {
+    if (confirm('¿Estás seguro de que deseas eliminar este producto?')) {
+        // Implementar eliminación
+        showAlert('info', 'Eliminación en desarrollo');
+    }
+}
+
+function exportProducts(format) {
+    showAlert('info', `Exportación ${format.toUpperCase()} en desarrollo`);
+}
+
+function handleImport(e) {
+    e.preventDefault();
+    showAlert('info', 'Importación en desarrollo');
+}
+
+function downloadTemplate() {
+    showAlert('info', 'Descarga de plantilla en desarrollo');
+}
+
+// Mostrar alertas
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Insertar al inicio del contenido
+    const content = document.querySelector('.tab-content');
+    content.insertBefore(alertDiv, content.firstChild);
+    
+    // Auto-remove después de 5 segundos
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}
