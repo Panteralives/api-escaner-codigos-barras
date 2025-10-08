@@ -9,24 +9,12 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --pos-primary: #2c5282;
-            --pos-secondary: #4a90e2;
-            --pos-accent: #28a745;
-            --pos-danger: #dc3545;
-            --pos-warning: #ffc107;
-            --pos-success: #28a745;
-            --pos-dark: #343a40;
-            --pos-light: #f8f9fa;
-            --pos-bg: #e8f4fd;
-            --pos-border-radius: 12px;
+            --pos-primary: #2c5282; --pos-secondary: #4a90e2; --pos-accent: #28a745;
+            --pos-danger: #dc3545; --pos-warning: #ffc107; --pos-dark: #343a40;
+            --pos-light: #f8f9fa; --pos-bg: #e8f4fd; --pos-border-radius: 12px;
             --pos-card-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--pos-bg);
-            height: 100vh;
-            overflow: hidden;
-        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--pos-bg); height: 100vh; overflow: hidden; }
         .pos-container { height: 100vh; display: flex; flex-direction: column; }
         .pos-header { background: linear-gradient(135deg, var(--pos-primary) 0%, var(--pos-secondary) 100%); color: white; padding: 1rem 1.5rem; box-shadow: var(--pos-card-shadow); z-index: 100; }
         .pos-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
@@ -34,31 +22,29 @@
         .products-section { flex: 2; background: white; border-radius: var(--pos-border-radius); box-shadow: var(--pos-card-shadow); display: flex; flex-direction: column; overflow: hidden; }
         .products-header { padding: 1rem; border-bottom: 1px solid #e9ecef; }
         .products-list { flex: 1; overflow-y: auto; padding: 0; }
-        .product-item { display: flex; align-items: center; justify-content: space-between; padding: 1.2rem 1.5rem; border-bottom: 1px solid #e9ecef; transition: background-color 0.2s ease; }
-        .product-item:hover { background: var(--pos-light); }
+        .product-item { display: flex; align-items: center; justify-content: space-between; padding: 1.2rem 1.5rem; border-bottom: 1px solid #e9ecef; }
         .product-info .product-name { font-weight: 600; font-size: 1.1rem; }
         .product-info .product-code { color: #6c757d; font-size: 0.9rem; }
-        .product-price { font-size: 1.25rem; font-weight: 700; color: var(--pos-success); text-align: right; }
+        .product-price { font-size: 1.25rem; font-weight: 700; color: var(--pos-accent); text-align: right; }
         .actions-section { flex: 1; display: flex; flex-direction: column; gap: 1rem; }
         .total-card { background: white; border-radius: var(--pos-border-radius); box-shadow: var(--pos-card-shadow); padding: 1.5rem; text-align: center; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
         .total-label { font-size: 1rem; font-weight: 600; color: var(--pos-secondary); text-transform: uppercase; }
         .total-amount { font-size: 2.8rem; font-weight: 800; margin: 0.5rem 0; color: var(--pos-dark); }
         .input-card { background: white; border-radius: var(--pos-border-radius); box-shadow: var(--pos-card-shadow); padding: 1.5rem; }
-        .product-input { height: 3rem; font-size: 1.1rem; }
-        .btn-pos { border: none; border-radius: var(--pos-border-radius); font-weight: 600; padding: 0.75rem 1.5rem; transition: all 0.2s ease; }
         .btn-pay { background: var(--pos-accent); color: white; width: 100%; font-size: 1.5rem; padding: 1rem; }
-        .btn-pay:hover { background: #218838; }
-        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #6c757d; text-align: center; padding: 2rem; }
-        .empty-icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.3; }
-        .alert-pos { position: fixed; top: 100px; right: 20px; z-index: 1060; min-width: 300px; }
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #6c757d; }
+        .alert-pos { position: fixed; top: 100px; right: 20px; z-index: 1080; min-width: 300px; }
+        .modal-title { font-weight: 700; color: var(--pos-primary); }
+        .btn-payment-method { font-size: 1.5rem; padding: 2rem; }
     </style>
 </head>
 <body>
     <div class="pos-container">
+        <!-- ... (El header y la estructura principal no cambian) ... -->
         <div class="pos-header">
             <div class="d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center gap-3"><i class="fas fa-cash-register fs-3"></i><h1>Punto de Venta</h1></div>
-                <div id="api-status" class="badge bg-success">API Conectada</div>
+                <div id="api-status-pos" class="badge bg-secondary">POS Server</div>
             </div>
         </div>
 
@@ -70,7 +56,7 @@
                 </div>
                 <div class="products-list" id="products-list">
                     <div id="empty-state" class="empty-state">
-                        <i class="fas fa-shopping-cart empty-icon"></i>
+                        <i class="fas fa-shopping-cart" style="font-size: 4rem; opacity: 0.3;"></i>
                         <h4>El carrito está vacío</h4>
                         <p>Escanea un producto para comenzar</p>
                     </div>
@@ -86,16 +72,11 @@
 
                 <div class="input-card">
                     <label for="product-code" class="form-label fw-bold">Código del Producto</label>
-                    <input type="text" id="product-code" class="form-control product-input" placeholder="Escanear o escribir código...">
-                    <div class="d-flex align-items-center justify-content-center gap-3 mt-3">
-                        <button class="btn btn-secondary" onclick="decreaseQty()">-</button>
-                        <span id="quantity-display" class="fs-4 fw-bold">1</span>
-                        <button class="btn btn-secondary" onclick="increaseQty()">+</button>
-                    </div>
+                    <input type="text" id="product-code" class="form-control" style="height: 3rem;" placeholder="Escanear o escribir código...">
                 </div>
 
                 <div class="d-grid gap-2">
-                    <button id="btn-pay" class="btn-pos btn-pay" onclick="processPay()" disabled>
+                    <button id="btn-pay" class="btn btn-pay" data-bs-toggle="modal" data-bs-target="#paymentModal" disabled>
                         <i class="fas fa-credit-card me-2"></i>PAGAR
                     </button>
                     <div class="d-flex gap-2">
@@ -107,128 +88,151 @@
         </div>
     </div>
 
+    <!-- ====================================================== -->
+    <!-- MODAL DE SELECCIÓN DE MÉTODO DE PAGO -->
+    <!-- ====================================================== -->
+    <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="paymentModalLabel">Seleccionar Método de Pago</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-grid gap-3">
+                        <button class="btn btn-success btn-payment-method" onclick="initiatePayment('Contado')">
+                            <i class="fas fa-money-bill-wave me-3"></i>Contado
+                        </button>
+                        <button class="btn btn-primary btn-payment-method" onclick="initiatePayment('Tarjeta')">
+                            <i class="fas fa-credit-card me-3"></i>Tarjeta
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
         // --- CONFIGURACIÓN Y ESTADO GLOBAL ---
-        const API_BASE_URL = 'http://127.0.0.1:8000';
+        
+        const POS_SERVER_URL = 'http://localhost:3002';
         let cart = [];
-        let currentQuantity = 1;
+        let paymentModal;
 
         // --- INICIALIZACIÓN ---
+        
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 Inicializando POS v2 - Modo Funcional...');
+            console.log('🚀 Inicializando POS v2 - Integrado con Facade...');
+            paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
             setupEventListeners();
-            checkApiStatus();
+            checkPosServerStatus();
             updateDisplay();
         });
 
         function setupEventListeners() {
-            const productInput = document.getElementById('product-code');
-            productInput.addEventListener('keypress', (e) => {
+            document.getElementById('product-code').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     addProductFromInput();
                 }
             });
-            productInput.focus();
+            document.getElementById('product-code').focus();
         }
 
-        async function checkApiStatus() {
-            const statusBadge = document.getElementById('api-status');
+        async function checkPosServerStatus() {
+            const statusBadge = document.getElementById('api-status-pos');
             try {
-                const response = await fetch(`${API_BASE_URL}/api/v1/health`);
-                if (!response.ok) throw new Error('API no responde correctamente');
-                statusBadge.textContent = 'API Conectada';
-                statusBadge.className = 'badge bg-success';
+                const response = await fetch(`${POS_SERVER_URL}/api/status`);
+                if (!response.ok) throw new Error('POS Server no responde');
+                const data = await response.json();
+                statusBadge.textContent = data.api_connected ? 'API Conectada' : 'API Desconectada';
+                statusBadge.className = `badge bg-${data.api_connected ? 'success' : 'danger'}`;
             } catch (error) {
-                console.error('API connection failed:', error);
-                statusBadge.textContent = 'API Desconectada';
+                console.error('Error de conexión con POS Server:', error);
+                statusBadge.textContent = 'POS Server OFFLINE';
                 statusBadge.className = 'badge bg-danger';
             }
         }
         
         // --- LÓGICA DE BÚSQUEDA Y CARRITO ---
+        
         async function addProductFromInput() {
             const input = document.getElementById('product-code');
             const codigo = input.value.trim();
             if (!codigo) return;
 
             try {
-                const response = await fetch(`${API_BASE_URL}/api/v1/productos/${codigo}`);
+                // Usamos el API del POS Server como proxy
+                const response = await fetch(`${POS_SERVER_URL}/api/productos/${codigo}`);
                 
                 if (response.status === 404) {
                     showAlert('warning', `Producto con código "${codigo}" no encontrado.`);
                     return;
                 }
-                if (!response.ok) {
-                    throw new Error(`Error del servidor: ${response.statusText}`);
-                }
+                if (!response.ok) throw new Error('Error del servidor');
 
                 const producto = await response.json();
-                addProductToCart(producto, currentQuantity);
+                addProductToCart(producto);
 
             } catch (error) {
                 console.error('Error al buscar producto:', error);
-                showAlert('danger', 'No se pudo conectar con el servidor para buscar el producto.');
+                showAlert('danger', 'No se pudo conectar para buscar el producto.');
             } finally {
                 input.value = '';
                 input.focus();
-                resetQuantity();
             }
         }
 
-        function addProductToCart(producto, quantity) {
-            if (producto.stock < quantity) {
-                showAlert('danger', `Stock insuficiente para "${producto.nombre}". Disponible: ${producto.stock}`);
-                return;
-            }
-
-            const existingIndex = cart.findIndex(item => item.codigo_barra === producto.codigo_barra);
+        function addProductToCart(producto) {
+            const existingIndex = cart.findIndex(item => item.codigo === producto.codigo_barra);
             if (existingIndex > -1) {
-                const newQuantity = cart[existingIndex].quantity + quantity;
-                if (producto.stock < newQuantity) {
-                    showAlert('warning', `Stock máximo alcanzado para "${producto.nombre}".`);
-                    return;
-                }
-                cart[existingIndex].quantity = newQuantity;
+                cart[existingIndex].cantidad++;
             } else {
-                cart.push({ ...producto, quantity });
+                cart.push({ 
+                    codigo: producto.codigo_barra,
+                    nombre: producto.nombre,
+                    precio: producto.precio_venta,
+                    cantidad: 1 
+                });
             }
-            
-            showAlert('success', `${producto.nombre} (x${quantity}) agregado.`);
+            showAlert('success', `${producto.nombre} agregado.`);
             updateDisplay();
         }
 
-        // --- LÓGICA DE PAGO ---
-        async function processPay() {
+        // --- LÓGICA DE PAGO (NUEVO FLUJO) ---
+        
+        async function initiatePayment(metodoPago) {
             if (cart.length === 0) return;
+            paymentModal.hide(); // Ocultar el modal
 
-            const totalAmount = cart.reduce((sum, item) => sum + (item.precio * item.quantity), 0);
+            const total = cart.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
 
-            const saleData = {
-                items: cart.map(item => ({
-                    codigo_barra: item.codigo_barra,
-                    quantity: item.quantity
-                })),
-                payment_method: "cash", // Simplificado por ahora
-                total_amount: totalAmount
+            const ventaData = {
+                productos: cart,
+                cliente_id: "default", // Placeholder
+                metodo_pago: metodoPago,
+                total: total
             };
 
             try {
-                const response = await fetch(`${API_BASE_URL}/api/v1/sales/`, {
+                const response = await fetch(`${POS_SERVER_URL}/api/ventas`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(saleData)
+                    body: JSON.stringify(ventaData)
                 });
 
+                const result = await response.json();
+
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.detail || 'Error al procesar la venta.');
+                    throw new Error(result.message || 'Error al procesar la venta.');
                 }
                 
-                const result = await response.json();
-                showAlert('success', `Venta #${result.sale_number} completada por $${totalAmount.toFixed(2)}`);
+                showAlert('success', `Venta #${result.factura_id_local} enviada a facturación. Estado: ${result.status}`);
                 
                 setTimeout(() => clearAll(false), 500);
 
@@ -239,6 +243,7 @@
         }
 
         // --- ACTUALIZACIÓN DE UI ---
+        
         function updateDisplay() {
             updateProductsList();
             updateTotals();
@@ -254,29 +259,28 @@
                 container.innerHTML = '';
                 container.appendChild(emptyState);
                 emptyState.style.display = 'flex';
-                return;
+            } else {
+                emptyState.style.display = 'none';
+                container.innerHTML = cart.map((item, index) => {
+                    const totalLinea = item.precio * item.cantidad;
+                    return `
+                    <div class="product-item">
+                        <div class="product-info">
+                            <div class="product-name">${item.nombre}</div>
+                            <div class="product-code">${item.codigo} | Cant: ${item.cantidad}</div>
+                        </div>
+                        <div class="product-price">$${totalLinea.toFixed(2)}</div>
+                    </div>`;
+                }).join('');
+                container.scrollTop = container.scrollHeight;
             }
-            
-            emptyState.style.display = 'none';
-            container.innerHTML = cart.map((item, index) => {
-                const totalLinea = item.precio * item.quantity;
-                return `
-                <div class="product-item" data-index="${index}">
-                    <div class="product-info">
-                        <div class="product-name">${item.nombre}</div>
-                        <div class="product-code">${item.codigo_barra} | Cant: ${item.quantity}</div>
-                    </div>
-                    <div class="product-price">$${totalLinea.toFixed(2)}</div>
-                </div>`;
-            }).join('');
-            container.scrollTop = container.scrollHeight;
         }
 
         function updateTotals() {
-            const total = cart.reduce((sum, item) => sum + (item.precio * item.quantity), 0);
-            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            const total = cart.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+            const totalItems = cart.reduce((sum, item) => sum + item.cantidad, 0);
             document.getElementById('total-amount').textContent = `$${total.toFixed(2)}`;
-            document.getElementById('total-items').textContent = `${totalItems} producto${totalItems !== 1 ? 's' : ''}`;
+            document.getElementById('total-items').textContent = `${totalItems} producto(s)`;
         }
 
         function updateButtons() {
@@ -285,7 +289,8 @@
             document.getElementById('btn-delete-last').disabled = !hasItems;
         }
 
-        // --- FUNCIONES DE BOTONES AUXILIARES ---
+        // --- FUNCIONES AUXILIARES ---
+        
         function deleteLastItem() {
             if (cart.length > 0) {
                 const removed = cart.pop();
@@ -295,31 +300,12 @@
         }
 
         function clearAll(confirm = true) {
-            if (confirm && cart.length > 0 && !window.confirm('¿Está seguro de que desea limpiar todo el carrito?')) {
-                return;
-            }
+            if (confirm && cart.length > 0 && !window.confirm('¿Limpiar todo el carrito?')) return;
             cart = [];
             updateDisplay();
             if (confirm) showAlert('warning', 'Carrito limpiado.');
         }
-
-        // --- CONTROLES DE CANTIDAD ---
-        function increaseQty() {
-            if (currentQuantity < 99) currentQuantity++;
-            document.getElementById('quantity-display').textContent = currentQuantity;
-        }
-
-        function decreaseQty() {
-            if (currentQuantity > 1) currentQuantity--;
-            document.getElementById('quantity-display').textContent = currentQuantity;
-        }
         
-        function resetQuantity() {
-            currentQuantity = 1;
-            document.getElementById('quantity-display').textContent = '1';
-        }
-        
-        // --- UTILIDADES ---
         function showAlert(type, message) {
             const alertContainer = document.body;
             const alertEl = document.createElement('div');
