@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """
-Worker de Facturación Asíncrono
+Worker de Facturación Asíncrono - Versión Mejorada
 
-Este script se ejecuta como un proceso independiente para consumir mensajes de la
-cola de facturación, procesarlos, interactuar con el SFE y manejar reintentos.
+Este worker consume mensajes de RabbitMQ y procesa cada uno de forma robusta.
+- Simula una API SFE con diferentes tipos de errores (permanentes y transitorios).
+- Utiliza logging con timestamps para una mejor trazabilidad.
+- Implementa una lógica de reintento inteligente que solo reintenta en fallos transitorios.
 """
 
 import pika
@@ -12,120 +14,174 @@ import time
 import random
 import sys
 from pathlib import Path
+from datetime import datetime
 
-# --- Añadir el directorio raíz al sys.path ---
+# --- Añadir el directorio raíz al sys.path para importaciones correctas ---
 project_root = Path(__file__).resolve().parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.append(str(project_root))
-# ---------------------------------------------
+# ---------------------------------------------------------------------
 
 from src.payment.dao import FacturaDAO
-import streamlit as st # Para obtener la configuración de RabbitMQ
+import streamlit as st # Usado para obtener la configuración de secrets.toml
 
-MAX_REINTENTOS = 5
+# --- Constantes y Configuración ---
+MAX_REINTENTOS = 4
+COLA_FACTURACION = 'facturacion'
 
+# --- Utilidad de Logging ---
+def log(mensaje: str):
+    """Imprime un mensaje con un timestamp UTC."""
+    timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+    print(f"[{timestamp}Z] {mensaje}")
+
+# --- Simulador de API Externa (SFE) ---
 class SFE_API_Simulator:
-    """Simulador de una API de Sistema de Facturación Electrónica (SFE)."""
+    """
+    Simulador mejorado de una API de Sistema de Facturación Electrónica (SFE).
+    Ahora simula respuestas similares a HTTP con diferentes probabilidades.
+    """
     def enviar_factura(self, datos_factura: dict) -> dict:
         """
-        Simula el envío de una factura al SFE. 
-        Tarda un tiempo y puede fallar aleatoriamente.
+        Simula el envío de una factura al SFE.
+        - 70% de éxito (200 OK)
+        - 15% de error de cliente (400 Bad Request) -> No se debe reintentar.
+        - 15% de error de servidor (503 Service Unavailable) -> Se debe reintentar.
         """
-        print(f"[SFE] Enviando factura ID {datos_factura.get('id')} al SFE...")
-        time.sleep(random.uniform(1, 4)) # Simular latencia de red
+        factura_id = datos_factura.get('id')
+        log(f"[SFE] Enviando factura ID {factura_id}...")
+        time.sleep(random.uniform(0.5, 2.5)) # Simular latencia de red
 
-        # 80% de probabilidad de éxito
-        if random.random() < 0.8:
-            print(f"[SFE] ✅ Factura ID {datos_factura.get('id')} ACEPTADA.")
-            return {"status": "ok", "sfe_uuid": f"uuid-{random.randint(1000, 9999)}"}
-        else:
-            print(f"[SFE] ❌ Factura ID {datos_factura.get('id')} RECHAZADA.")
-            return {"status": "error", "message": "Error de validación de datos (simulado)"}
+        rand_val = random.random()
+        
+        if rand_val < 0.70: # Éxito
+            log(f"[SFE] ✅ Factura ID {factura_id} ACEPTADA.")
+            return {
+                "status_code": 200,
+                "body": {"status": "ok", "sfe_uuid": f"uuid-{random.randint(1000, 9999)}"}
+            }
+        elif rand_val < 0.85: # Error de Cliente (permanente)
+            log(f"[SFE] ❌ Factura ID {factura_id} RECHAZADA (Datos inválidos).")
+            return {
+                "status_code": 400,
+                "body": {"status": "error", "message": "Error 400: Datos de la factura no válidos (simulado)."}
+            }
+        else: # Error de Servidor (transitorio)
+            log(f"[SFE] ❌ Factura ID {factura_id} FALLÓ (Servidor no disponible).")
+            return {
+                "status_code": 503,
+                "body": {"status": "error", "message": "Error 503: El servicio SFE no está disponible temporalmente (simulado)."}
+            }
 
-def callback(ch, method, properties, body):
-    """
-    Función que se ejecuta por cada mensaje consumido de la cola.
-    """
-    print(f"\n[*] Mensaje recibido: {body.decode()}")
-    mensaje = json.loads(body.decode())
-    factura_id = mensaje.get("factura_id")
-    intentos = mensaje.get("intentos", 0)
+# --- Lógica del Consumidor de RabbitMQ ---
+class Worker:
+    def __init__(self):
+        self.factura_dao = FacturaDAO()
+        self.sfe_simulador = SFE_API_Simulator()
+        self.connection = None
+        self.channel = None
 
-    factura_dao = FacturaDAO()
-    sfe_simulador = SFE_API_Simulator()
-
-    # Obtener los datos de la factura desde la BD
-    # En un caso real, aquí se leerían los datos completos de la factura.
-    datos_factura_simulados = {"id": factura_id, "total": 123.45}
-
-    # Intentar enviar la factura al SFE
-    resultado_sfe = sfe_simulador.enviar_factura(datos_factura_simulados)
-
-    if resultado_sfe["status"] == "ok":
-        # ÉXITO: Actualizar estado y UUID en la base de datos
-        factura_dao.actualizar_estado_factura(factura_id, 'Recibida')
-        # En un caso real, aquí se guardaría el UUID: factura_dao.set_sfe_uuid(factura_id, resultado_sfe["sfe_uuid"])
-        print(f"[✔] Factura {factura_id} procesada y marcada como 'Recibida'.")
-        ch.basic_ack(delivery_tag=method.delivery_tag) # Confirmar mensaje, se elimina de la cola
-    
-    else:
-        # FALLO: Implementar lógica de reintento con "Exponential Backoff"
-        if intentos < MAX_REINTENTOS:
-            intentos += 1
-            retraso = 2 ** intentos # 2, 4, 8, 16, 32 segundos
-            print(f"[!] Fallo al procesar factura {factura_id}. Reintentando en {retraso}s (Intento {intentos}/{MAX_REINTENTOS}).")
-
-            # 1. Rechazar el mensaje actual de la cola para no volver a procesarlo inmediatamente
-            ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
-
-            # 2. Esperar (esto bloquea al worker, en producción se usarían DLX de RabbitMQ)
-            time.sleep(retraso)
-
-            # 3. Publicar un NUEVO mensaje para el reintento
-            nuevo_mensaje = {"factura_id": factura_id, "intentos": intentos}
-            ch.basic_publish(
-                exchange='',
-                routing_key='facturacion',
-                body=json.dumps(nuevo_mensaje),
-                properties=pika.BasicProperties(delivery_mode=2)
-            )
-        else:
-            # Límite de reintentos alcanzado
-            print(f"[🔥] Límite de reintentos para factura {factura_id} alcanzado. Marcada como 'Rechazada'.")
-            factura_dao.actualizar_estado_factura(factura_id, 'Rechazada', error=resultado_sfe.get("message"))
-            ch.basic_ack(delivery_tag=method.delivery_tag) # Confirmar para sacar de la cola
-
-def main():
-    print("--- Iniciando Worker de Facturación ---")
-    print("Esperando mensajes de la cola 'facturacion'. Para salir, presiona CTRL+C")
-    
-    # Conexión a RabbitMQ
-    try:
+    def _conectar_rabbitmq(self):
+        """Establece la conexión y el canal con RabbitMQ."""
         rb_config = st.secrets.get("rabbitmq", {})
         credentials = pika.PlainCredentials(rb_config.get("username", "guest"), rb_config.get("password", "guest"))
-        connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host=rb_config.get("host", "localhost"), port=rb_config.get("port", 5672), credentials=credentials)
+        params = pika.ConnectionParameters(
+            host=rb_config.get("host", "localhost"),
+            port=rb_config.get("port", 5672),
+            credentials=credentials
         )
-        channel = connection.channel()
-        channel.queue_declare(queue='facturacion', durable=True)
-        
-        # Configurar el consumidor
-        channel.basic_qos(prefetch_count=1) # Procesar un mensaje a la vez
-        channel.basic_consume(queue='facturacion', on_message_callback=callback)
-        
-        channel.start_consuming()
+        self.connection = pika.BlockingConnection(params)
+        self.channel = self.connection.channel()
+        self.channel.queue_declare(queue=COLA_FACTURACION, durable=True)
+        self.channel.basic_qos(prefetch_count=1) # Procesar un mensaje a la vez
+        log("[RabbitMQ] Conexión establecida y cola declarada.")
 
-    except pika.exceptions.AMQPConnectionError as e:
-        print(f"❌ No se pudo conectar a RabbitMQ. ¿Está el servidor corriendo? - {e}")
-        sys.exit(1)
-    except KeyboardInterrupt:
-        print("\n--- Worker detenido manualmente ---")
+    def _procesar_mensaje(self, ch, method, properties, body):
+        """Punto central de la lógica de procesamiento para cada mensaje."""
         try:
-            connection.close()
-        except NameError:
-            pass
-        sys.exit(0)
+            mensaje = json.loads(body.decode())
+            factura_id = mensaje.get("factura_id")
+            intentos = mensaje.get("intentos", 1)
+            log(f"[*] Mensaje recibido para factura ID {factura_id} (Intento #{intentos}).")
+            
+            # 1. Simular envío al SFE
+            datos_factura = {"id": factura_id} # Simulación, en un caso real se carga desde la DB
+            resultado_sfe = self.sfe_simulador.enviar_factura(datos_factura)
+            
+            # 2. Interpretar la respuesta del SFE
+            status_code = resultado_sfe["status_code"]
+
+            if status_code == 200:
+                # ÉXITO FINAL
+                self.factura_dao.actualizar_estado_factura(factura_id, 'Recibida')
+                log(f"[✔] Factura {factura_id} procesada exitosamente y marcada como 'Recibida'.")
+                ch.basic_ack(delivery_tag=method.delivery_tag)
+
+            elif 400 <= status_code < 500:
+                # ERROR PERMANENTE (No reintentar)
+                error_msg = resultado_sfe["body"].get("message", "Error desconocido del cliente.")
+                self.factura_dao.actualizar_estado_factura(factura_id, 'Rechazada', error=error_msg)
+                log(f"[🔥] Error permanente para factura {factura_id}. Marcada como 'Rechazada'. Motivo: {error_msg}")
+                ch.basic_ack(delivery_tag=method.delivery_tag) # Sacar de la cola
+
+            else: # ERROR TRANSITORIO (5xx)
+                # Reintentar si no hemos superado el límite
+                if intentos < MAX_REINTENTOS:
+                    self._republicar_para_reintento(ch, method, factura_id, intentos)
+                else:
+                    error_msg = f"Se superó el límite de {MAX_REINTENTOS} reintentos."
+                    self.factura_dao.actualizar_estado_factura(factura_id, 'Rechazada', error=error_msg)
+                    log(f"[🔥] Límite de reintentos para factura {factura_id} alcanzado. Marcada como 'Rechazada'.")
+                    ch.basic_ack(delivery_tag=method.delivery_tag) # Sacar de la cola
+        
+        except json.JSONDecodeError:
+            log("[!] Error: Mensaje no es un JSON válido. Descartando.")
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+        except Exception as e:
+            log(f"[!] Se produjo un error inesperado en el procesamiento: {e}. El mensaje será rechazado.")
+            ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False) # Evitar bucles de envenenamiento
+
+    def _republicar_para_reintento(self, ch, method, factura_id: int, intentos_actuales: int):
+        """Nacks el mensaje actual y publica uno nuevo para un reintento futuro."""
+        # Rechazar el mensaje actual para que no vuelva a la cola inmediatamente
+        ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+
+        retraso = 2 ** intentos_actuales # Exponential backoff: 2, 4, 8, 16s
+        log(f"[!] Fallo transitorio en factura {factura_id}. Reintentando en {retraso}s (Intento {intentos_actuales+1}/{MAX_REINTENTOS}).")
+        
+        # Bloquear la ejecución (simple para este ejemplo, en producción usar DLX de RabbitMQ)
+        time.sleep(retraso)
+
+        # Publicar un nuevo mensaje con el contador de intentos incrementado
+        nuevo_mensaje = {"factura_id": factura_id, "intentos": intentos_actuales + 1}
+        ch.basic_publish(
+            exchange='',
+            routing_key=COLA_FACTURACION,
+            body=json.dumps(nuevo_mensaje),
+            properties=pika.BasicProperties(delivery_mode=2) # Mensaje persistente
+        )
+        log(f"[*] Mensaje para reintento de factura {factura_id} publicado.")
+
+    def start(self):
+        """Inicia la conexión y el consumo de mensajes."""
+        log("--- Iniciando Worker de Facturación ---")
+        try:
+            self._conectar_rabbitmq()
+            self.channel.basic_consume(queue=COLA_FACTURACION, on_message_callback=self._procesar_mensaje)
+            log("Esperando mensajes. Para salir, presiona CTRL+C")
+            self.channel.start_consuming()
+        except pika.exceptions.AMQPConnectionError as e:
+            log(f"❌ No se pudo conectar a RabbitMQ. ¿Está el servidor corriendo? - {e}")
+            sys.exit(1)
+        except KeyboardInterrupt:
+            log("\n--- Worker detenido manualmente ---")
+            if self.connection and self.connection.is_open:
+                self.connection.close()
+            sys.exit(0)
+
+def main():
+    worker = Worker()
+    worker.start()
 
 if __name__ == '__main__':
     main()
-
