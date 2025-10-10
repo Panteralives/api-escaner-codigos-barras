@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScanPay POS</title>
+    <!-- 
+        ⚠️  ADVERTENCIA: NO MODIFICAR LA ESTRUCTURA DE ESTE HTML
+        Solo se pueden cambiar textos, no la organización de elementos
+        Para cambios visuales, modificar pos_styles.css
+        Para cambios funcionales, modificar pos_script.js
+    -->
+    <link rel="stylesheet" href="pos_styles.css">
+</head>
+<body>
+    <!-- Header - NO MODIFICAR ESTRUCTURA -->
+    <header class="header">
+        <div class="header-left">
+            <div class="header-icon">📦</div>
+            <div class="header-title">ScanPay POS</div>
+        </div>
+        <div class="header-right">
+            <button class="scanning-btn">
+                <div class="scanning-dot"></div>
+                Scanning
+            </button>
+            <button class="config-btn">
+                ⚙️ Config
+            </button>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal - NO MODIFICAR ESTRUCTURA -->
+    <div class="main-container">
+        <!-- Panel Izquierdo - NO MODIFICAR ESTRUCTURA -->
+        <div class="left-panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    🛒 Scanned Products
+                </div>
+                <div class="items-count" id="items-count">0 items</div>
+            </div>
+            
+            <div class="cart-content" id="cart-content">
+                <!-- El contenido se genera dinámicamente -->
+            </div>
+        </div>
+
+        <!-- Panel Derecho - NO MODIFICAR ESTRUCTURA -->
+        <div class="right-panel">
+            <!-- Tarjeta Total - NO MODIFICAR ESTRUCTURA -->
+            <div class="total-card">
+                <div class="total-label">TOTAL TO PAY</div>
+                <div class="total-amount" id="total-amount">$0.00</div>
+                <div class="total-products" id="total-products">0 products</div>
+            </div>
+
+            <!-- Tarjeta Product Code - NO MODIFICAR ESTRUCTURA -->
+            <div class="input-card">
+                <div class="input-header">
+                    <div class="barcode-icon">|||</div>
+                    <div class="input-label">Product Code</div>
+                </div>
+                
+                <input 
+                    type="text" 
+                    class="code-input" 
+                    id="product-code" 
+                    placeholder="Scan or type code..."
+                    autocomplete="off"
+                >
+                
+                <div class="quantity-controls">
+                    <button class="quantity-btn" onclick="changeQuantity(-1)">−</button>
+                    <input type="number" class="quantity-display" id="quantity" value="1" min="1" readonly>
+                    <button class="quantity-btn" onclick="changeQuantity(1)">+</button>
+                </div>
+            </div>
+
+            <!-- Tarjeta Acciones - NO MODIFICAR ESTRUCTURA -->
+            <div class="actions-card">
+                <button class="pay-button" id="pay-btn" onclick="processPay()" disabled>
+                    💳 PAY
+                </button>
+                
+                <div class="action-buttons">
+                    <button class="action-btn delete-btn" onclick="deleteLastItem()">
+                        ↶ Delete Last
+                    </button>
+                    <button class="action-btn clear-btn" onclick="clearAll()">
+                        🗑️ Clear All
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript - NO MODIFICAR -->
+    <script src="pos_script.js"></script>
+</body>
+</html>
